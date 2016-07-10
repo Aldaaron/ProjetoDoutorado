@@ -42,6 +42,13 @@ def createSpline2(pts):
     return splineID
 
 def createEllipse(v1,v2,v3):
+    printM("create curve vertex %d vertex %d vertex %d  ellipse" % (v1,v2,v3))
+    cubit.cmd("create curve vertex %d vertex %d vertex %d  ellipse" % (v1,v2,v3))
+    ellipseID = cubit.get_last_id("curve")
+    printM("new Curve " + str(ellipseID) + " created")
+    return ellipseID
+
+def createEllipse2(v1,v2,v3):
     printM("create curve vertex %d %d %d ellipse " % (v1,v2,v3))
     cubit.cmd("create surface ellipse vertex %d %d %d " % (v1,v2,v3))
     ellipseS = cubit.get_last_id("surface")
@@ -225,8 +232,8 @@ def distance(p1, p2):
 
 def getAngles(p1, p2):
     deltaX = p2[0]-p1[0];
-    deltaY = p2[1]-p1[2];
-    deltaZ = p2[1]-p1[2];
+    deltaY = p2[1]-p1[1];
+    deltaZ = p2[2]-p1[2];
     angles = [math.atan2(deltaY, deltaX), math.atan2(deltaZ, deltaX)]
     return angles
 
@@ -247,7 +254,7 @@ def rotate(point, origin, angle):
     point[1] = coords[1] + origin[1]
     point[2] = coords[2] + origin[2]
 
-def rotateAndMove(point, origin, angle, dist):
+def rotateAndMove(point, origin, angleY, angleZ, dist):
     deltaY = point[1] - origin[1];
     deltaX = point[0] - origin[0];
     deltaZ = point[2] - origin[2];
@@ -255,10 +262,31 @@ def rotateAndMove(point, origin, angle, dist):
     az = math.atan2(deltaZ, deltaX)
     dist += distance(point,origin)
     coords = [0,0,0]
-    angleR = degreeToRadians(angle)
+    angleYR = degreeToRadians(angleY)
+    angleZR = degreeToRadians(angleZ)
     coords[0] += dist
-    coords[1] += degreeToRadians(90)
-    coords[2] += ay+angleR
+    coords[1] += az+angleZR+degreeToRadians(90)
+    coords[2] += ay+angleYR
+    cartCoords(coords)
+    point[0] = coords[0] + origin[0]
+    point[1] = coords[1] + origin[1]
+    point[2] = coords[2] + origin[2]
+    
+def rotate2(point, origin, angle, dist):
+    deltaY = point[1] - origin[1];
+    deltaX = point[0] - origin[0];
+    deltaZ = point[2] - origin[2];
+    ay = math.atan2(deltaY, deltaX)
+    ay = ay+degreeToRadians(angle)
+    az = math.atan2(deltaZ, deltaX)
+    az = az+degreeToRadians(90)
+    if deltaX < 0:
+        ay = ay
+        az = az+degreeToRadians(-180)
+    coords = [0,0,0]
+    coords[0] += dist
+    coords[1] += az
+    coords[2] += ay
     cartCoords(coords)
     point[0] = coords[0] + origin[0]
     point[1] = coords[1] + origin[1]

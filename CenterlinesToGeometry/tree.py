@@ -117,7 +117,7 @@ class Tree(object):
             
     def genVolume(self):
         for v in self.vessels:
-            cod = v.genVolume2()
+            cod = v.genVolume()
             if cod == -1:
                 return
             

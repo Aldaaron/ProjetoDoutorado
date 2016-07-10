@@ -42,65 +42,31 @@ class Vessel(object):
         self.genIntervals()
         
         if self.nSons == 2:
-            for x in range(0, len(self.points)-1):
-                if x != 0 or self.root is None:
-                    raio = self.raio
-                    if self.root is not None:
-                        raio = (x*self.raio + (len(self.points)-1-x) * self.root.raio*0.75) / (len(self.points)-1)
-                    circleID = geo.createCircleNormal(self.points[x],raio,self.index)
-                    self.circles.append(circleID)
-            body1 = []
-            for x in range(0, len(self.circles)-1):
-                surfID = geo.createSkinCurve(self.circles[x],self.circles[x+1])
-                body1.append(surfID)    
+            if self.root is None:
+                circleID = geo.createCircleNormal(self.vI,self.raio,self.index)
+                self.circles.append(circleID)
+            circleID = geo.createCircleNormal(self.points[-2],self.raio,self.index)
+            self.circles.append(circleID)
+            body = []
+            surfID = geo.createSkinCurve(self.circles[0],self.circles[-1])
+            body.append(surfID)    
             surfID = geo.createSurfaceCurve(self.circles[0])
-            body1.append(surfID)
+            body.append(surfID)
             surfID = geo.createSurfaceCurve(self.circles[len(self.circles)-1])
-            body1.append(surfID)
-            self.vols.append(geo.createVolume(body1))
-            
-            v1 = cubit.vertex(self.points[0]).coordinates()
-            v2 = cubit.vertex(self.points[-1]).coordinates()
-            x = v1[0]
-            y = v1[1]
-            z = v1[2]
-            x2 = v2[0]
-            y2 = v2[1]
-            z2 = v2[2]
-            d = cubit.get_distance_between(self.points[0], self.points[-2])
-            dt = d + self.raio*0.1
-            t = dt/d
-            
-            vAux = geo.createVertex(x,y,z)
-            x3 = x - t*x +t*x2;
-            y3 = y - t*y +t*y2;
-            z3 = z - t*z +t*z2;
-            geo.moveVertexL(vAux,x3,y3,z3)
-            
-            self.branch(vAux)
-            
-            circleID = geo.createCircleNormal(vAux,0.25*self.raio,self.index)  
-            body2 = []
-            surfID = geo.createSkinCurve(self.circles[-1],circleID)
-            body2.append(surfID)  
-            surfID = geo.createSurfaceCurve(self.circles[-1])
-            body2.append(surfID)
-            surfID = geo.createSurfaceCurve(circleID)
-            body2.append(surfID)
-            self.vols.append(geo.createVolume(body2))
+            body.append(surfID)
+            self.vols.append(geo.createVolume(body))
+            self.vols.append(self.genSon2(-30))
+            self.vols.append(self.genSon2(30))
             self.volID = geo.stepUnion(self.vols)
         else: 
-            for x in range(0, len(self.points)):
-                if x != 0 or self.root is None:
-                    raio = self.raio
-                    if self.root is not None:
-                        raio = (x*self.raio + (len(self.points)-1-x) * self.root.raio*0.75) / (len(self.points)-1)
-                    circleID = geo.createCircleNormal(self.points[x],raio,self.index)
-                    self.circles.append(circleID)
+            if self.root is None:
+                circleID = geo.createCircleNormal(self.vI,self.raio,self.index)
+                self.circles.append(circleID)
+            circleID = geo.createCircleNormal(self.points[-1],self.raio,self.index)
+            self.circles.append(circleID)
             body = []
-            for x in range(0, len(self.circles)-1):
-                surfID = geo.createSkinCurve(self.circles[x],self.circles[x+1])
-                body.append(surfID)  
+            surfID = geo.createSkinCurve(self.circles[0],self.circles[-1])
+            body.append(surfID)  
             surfID = geo.createSurfaceCurve(self.circles[0])
             body.append(surfID)
             surfID = geo.createSurfaceCurve(self.circles[len(self.circles)-1])
@@ -108,7 +74,7 @@ class Vessel(object):
             self.volID = geo.createVolume(body)
             if self.nSons == 1:
                 self.vf1 == self.vF
-                self.cf1 == surfID     
+                self.cf1 == surfID
     
     def linkToRoot(self):
         if self.root.nSons == 2:
@@ -131,303 +97,162 @@ class Vessel(object):
             self.vI = self.root.vf1
             lineID = geo.createLine(self.root.vf1,self.vF)
             self.index = lineID
-            self.circles.append(self.root.cf1)
-    
-    def branch(self, vID):
-        v1 = cubit.vertex(self.points[-2]).coordinates()
-        v2 = cubit.vertex(vID).coordinates()
-        x = v1[0]
-        y = v1[1]
-        z = v1[2]
-        x2 = v2[0]
-        y2 = v2[1]
-        z2 = v2[2]
-        v1ID = geo.createVertex(x,y,z)
-        deltaY = y2-y;
-        deltaX = x2-x;
-        deltaZ = z2-z;
-        ay = math.atan2(deltaY, deltaX)
-        az = math.atan2(deltaZ, deltaX)
-        angle = (90) * (math.pi/180)
-        xT = math.cos(angle) * (x2 - x) - math.sin(angle) * (y2 - y) + x;
-        yT = math.sin(angle) * (x2 - x) + math.cos(angle) * (y2 - y) + y;
-        vAux = geo.createVertex(x,y,z)
-        x3 = x + self.raio * math.cos(0*0.017453292519+az)*math.cos(-90*0.017453292519+ay);
-        y3 = y + self.raio * math.cos(0*0.017453292519+az)*math.sin(-90*0.017453292519+ay);
-        z3 = z + self.raio * math.sin(0*0.017453292519+az);
-        geo.moveVertexL(vAux,x3,y3,z3)
-        angle = -angle
-        xT = math.cos(angle) * (x2 - x) - math.sin(angle) * (y2 - y) + x;
-        yT = math.sin(angle) * (x2 - x) + math.cos(angle) * (y2 - y) + y;
-        vAux2 = geo.createVertex(x,y,z)
-        x3 = x + self.raio * math.cos(0*0.017453292519+az)*math.cos(90*0.017453292519+ay);
-        y3 = y + self.raio * math.cos(0*0.017453292519+az)*math.sin(90*0.017453292519+ay);
-        z3 = z + self.raio * math.sin(0*0.017453292519+az);
-        geo.moveVertexL(vAux2,x3,y3,z3)
-        l1 = geo.createLine(vAux,self.points[-2])
-        l2 = geo.createLine(vAux2,self.points[-2])
-        vt1 = geo.createVertexOnCurveDistance(l1,0.75*self.raio)
-        vt2 = geo.createVertexOnCurveDistance(l2,0.75*self.raio)
-        circleIDf1i = geo.createCircleNormal(vt1,0.75*self.raio,self.index)
-        circleIDf2i = geo.createCircleNormal(vt2,0.75*self.raio,self.index)      
-        angle = (-30) * (math.pi/180)
-        self.vf1 = geo.createVertex(0,0,0)
-        coordsf1 = []
-        coordsf1.append(0)
-        coordsf1.append(0)
-        coordsf1.append(0)
-        origin = []
-        origin.append(v1[0])
-        origin.append(v1[1])
-        origin.append(v1[2])
-        geo.spheCoords(origin)
-        coordsf1[0] += 2*(self.raio)
-        angleR = geo.degreeToRadians(30)
-        coordsf1[1] += geo.degreeToRadians(90)
-        coordsf1[2] += ay-angleR
-        geo.cartCoords(coordsf1)
-        coordsf1[0] += x
-        coordsf1[1] += y
-        coordsf1[2] += z
-        geo.moveVertexL(self.vf1,coordsf1[0],coordsf1[1],coordsf1[2])
-        self.vf2 = geo.createVertex(0,0,0)
-        coordsf2 = []
-        coordsf2.append(0)
-        coordsf2.append(0)
-        coordsf2.append(0)
-        coordsf2[0] += 2*(self.raio)
-        coordsf2[1] += geo.degreeToRadians(90)
-        coordsf2[2] += ay+angleR
-        geo.cartCoords(coordsf2)
-        coordsf2[0] += x
-        coordsf2[1] += y
-        coordsf2[2] += z
-        geo.moveVertexL(self.vf2,coordsf2[0],coordsf2[1],coordsf2[2])
-        l1 = geo.createLine(self.vf1,self.points[-2])
-        l2 = geo.createLine(self.vf2,self.points[-2])
-        circleIDf1f = geo.createCircleNormal(self.vf1,0.75*self.raio,self.index)
-        circleIDf2f = geo.createCircleNormal(self.vf2,0.75*self.raio,self.index)
-        self.cf1 = circleIDf1f
-        self.cf2 = circleIDf2f   
-        bodyf1 = []
-        surfID = geo.createSkinCurve(circleIDf1i,circleIDf1f)
-        bodyf1.append(surfID)  
-        surfID = geo.createSurfaceCurve(circleIDf1i)
-        bodyf1.append(surfID)
-        surfID = geo.createSurfaceCurve(circleIDf1f)
-        bodyf1.append(surfID)
-        bodyf2 = []
-        surfID = geo.createSkinCurve(circleIDf2i,circleIDf2f)
-        bodyf2.append(surfID)  
-        surfID = geo.createSurfaceCurve(circleIDf2i)
-        bodyf2.append(surfID)
-        surfID = geo.createSurfaceCurve(circleIDf2f)
-        bodyf2.append(surfID)   
-        self.vols.append(geo.createVolume(bodyf1))
-        self.vols.append(geo.createVolume(bodyf2))
-    
-    def genVolume2(self):
-        if self.root is not None:
-            self.linkToRoot()
-        self.genIntervals()
-        
-        if self.nSons == 2:
-            if self.root is None:
-                circleID = geo.createCircleNormal(self.vI,self.raio,self.index)
-                self.circles.append(circleID)
-            circleID = geo.createCircleNormal(self.points[-2],self.raio,self.index)
-            self.circles.append(circleID)
-            body = []
-            surfID = geo.createSkinCurve(self.circles[0],self.circles[-1])
-            body.append(surfID)    
-            surfID = geo.createSurfaceCurve(self.circles[0])
-            body.append(surfID)
-            surfID = geo.createSurfaceCurve(self.circles[len(self.circles)-1])
-            body.append(surfID)
-            self.vols.append(geo.createVolume(body))
-            self.branch2()
-            self.volID = geo.stepUnion(self.vols)
-        else: 
-            if self.root is None:
-                circleID = geo.createCircleNormal(self.vI,self.raio,self.index)
-                self.circles.append(circleID)
-            circleID = geo.createCircleNormal(self.points[-1],self.raio,self.index)
-            self.circles.append(circleID)
-            body = []
-            surfID = geo.createSkinCurve(self.circles[0],self.circles[-1])
-            body.append(surfID)  
-            surfID = geo.createSurfaceCurve(self.circles[0])
-            body.append(surfID)
-            surfID = geo.createSurfaceCurve(self.circles[len(self.circles)-1])
-            body.append(surfID)
-            self.volID = geo.createVolume(body)
-            if self.nSons == 1:
-                self.vf1 == self.vF
-                self.cf1 == surfID     
-    
-    def branch2(self):
-        v1 = cubit.vertex(self.points[-2]).coordinates()
-        v2 = cubit.vertex(self.points[-1]).coordinates()
-        x = v1[0]
-        y = v1[1]
-        z = v1[2]
-        x2 = v2[0]
-        y2 = v2[1]
-        z2 = v2[2]
-        v1ID = geo.createVertex(x,y,z)
-        deltaY = y2-y;
-        deltaX = x2-x;
-        deltaZ = z2-z;
-        ay = math.atan2(deltaY, deltaX)
-        az = math.atan2(deltaZ, deltaX)
-        angle = (-90) * (math.pi/180)
-        vAux = geo.createVertex(x,y,z)
-        x3 = x + self.raio * math.cos(angle+az)*math.cos(ay);
-        y3 = y + self.raio * math.cos(angle+az)*math.sin(ay);
-        z3 = z + self.raio * math.sin(angle+az);
-        geo.moveVertexL(vAux,x3,y3,z3)
-        angle = -angle
-        vAux2 = geo.createVertex(x,y,z)
-        x3 = x + self.raio * math.cos(angle+az)*math.cos(ay);
-        y3 = y + self.raio * math.cos(angle+az)*math.sin(ay);
-        z3 = z + self.raio * math.sin(angle+az);
-        geo.moveVertexL(vAux2,x3,y3,z3)
-        lp = geo.createLine(vAux,vAux2)
-        cp1 = geo.createCircleNormal2(self.points[-2],vAux2,vAux,self.raio,self.index)
-        cp2 = geo.createCircleNormal2(self.points[-2],vAux,vAux2,self.raio,self.index)
-        #vt1 = geo.createVertexOnCurveDistance(l1,0.75*self.raio)
-        #vt2 = geo.createVertexOnCurveDistance(l2,0.75*self.raio)
-        #circleIDf1i = geo.createCircleNormal(vt1,0.75*self.raio,self.index)
-        #circleIDf2i = geo.createCircleNormal(vt2,0.75*self.raio,self.index)      
-        angle = (-30) * (math.pi/180)
-        self.vf1 = geo.createVertex(0,0,0)
-        coordsf1 = []
-        coordsf1.append(0)
-        coordsf1.append(0)
-        coordsf1.append(0)
-        origin = []
-        origin.append(v1[0])
-        origin.append(v1[1])
-        origin.append(v1[2])
-        geo.spheCoords(origin)
-        coordsf1[0] += 2*(self.raio)
-        angleR = geo.degreeToRadians(30)
-        coordsf1[1] += geo.degreeToRadians(90)
-        coordsf1[2] += ay-angleR
-        geo.cartCoords(coordsf1)
-        coordsf1[0] += x
-        coordsf1[1] += y
-        coordsf1[2] += z
-        geo.moveVertexL(self.vf1,coordsf1[0],coordsf1[1],coordsf1[2])
-        self.vf2 = geo.createVertex(0,0,0)
-        coordsf2 = []
-        coordsf2.append(0)
-        coordsf2.append(0)
-        coordsf2.append(0)
-        coordsf2[0] += 2*(self.raio)
-        coordsf2[1] += geo.degreeToRadians(90)
-        coordsf2[2] += ay+angleR
-        geo.cartCoords(coordsf2)
-        coordsf2[0] += x
-        coordsf2[1] += y
-        coordsf2[2] += z
-        geo.moveVertexL(self.vf2,coordsf2[0],coordsf2[1],coordsf2[2])
-        l1 = geo.createLine(self.vf1,self.points[-2])
-        l2 = geo.createLine(self.vf2,self.points[-2])
-        circleIDf1f = geo.createCircleNormal(self.vf1,0.75*self.raio,self.index)
-        circleIDf2f = geo.createCircleNormal(self.vf2,0.75*self.raio,self.index)
-        self.cf1 = circleIDf1f
-        self.cf2 = circleIDf2f
-        angle = (-90) * (math.pi/180)
-        vAuxf11 = geo.createVertex(0,0,0)
-        f1c = cubit.vertex(self.vf1).coordinates()
-        x3 = f1c[0] + 0.75*self.raio * math.cos(angle+az)*math.cos(ay);
-        y3 = f1c[1] + 0.75*self.raio * math.cos(angle+az)*math.sin(ay);
-        z3 = f1c[2] + 0.75*self.raio * math.sin(angle+az);
-        geo.moveVertexL(vAuxf11,x3,y3,z3)
-        angle = -angle
-        vAuxf12 = geo.createVertex(0,0,0)
-        x3 = f1c[0] + 0.75*self.raio * math.cos(angle+az)*math.cos(ay);
-        y3 = f1c[1] + 0.75*self.raio * math.cos(angle+az)*math.sin(ay);
-        z3 = f1c[2] + 0.75*self.raio * math.sin(angle+az);
-        geo.moveVertexL(vAuxf12,x3,y3,z3)
-        lf1 = geo.createLine(vAuxf11,vAuxf12)
-        cf1_1 = geo.createCircleNormal2(self.vf1,vAuxf12,vAuxf11,0.75*self.raio,self.index)
-        cf1_2 = geo.createCircleNormal2(self.vf1,vAuxf11,vAuxf12,0.75*self.raio,self.index)
-        ldirf1_1 = geo.createLine(vAux,vAuxf11)
-        ldirf1_2 = geo.createLine(vAux2,vAuxf12)
-        angle = (-90) * (math.pi/180)
-        vAuxf21 = geo.createVertex(0,0,0)
-        f2c = cubit.vertex(self.vf2).coordinates()
-        x3 = f2c[0] + 0.75*self.raio * math.cos(angle+az)*math.cos(ay);
-        y3 = f2c[1] + 0.75*self.raio * math.cos(angle+az)*math.sin(ay);
-        z3 = f2c[2] + 0.75*self.raio * math.sin(angle+az);
-        geo.moveVertexL(vAuxf21,x3,y3,z3)
-        angle = -angle
-        vAuxf22 = geo.createVertex(0,0,0)
-        x3 = f2c[0] + 0.75*self.raio * math.cos(angle+az)*math.cos(ay);
-        y3 = f2c[1] + 0.75*self.raio * math.cos(angle+az)*math.sin(ay);
-        z3 = f2c[2] + 0.75*self.raio * math.sin(angle+az);
-        geo.moveVertexL(vAuxf22,x3,y3,z3)
-        lf2 = geo.createLine(vAuxf21,vAuxf22)
-        cf2_1 = geo.createCircleNormal2(self.vf2,vAuxf22,vAuxf21,0.75*self.raio,self.index)
-        cf2_2 = geo.createCircleNormal2(self.vf2,vAuxf21,vAuxf22,0.75*self.raio,self.index)
-        ldirf2_1 = geo.createLine(vAux,vAuxf21)
-        ldirf2_2 = geo.createLine(vAux2,vAuxf22)
-        #building filho1 -----------------------------------------------------------------
-        curvesf1_s1 = [cp1,ldirf1_1,ldirf1_2,cf1_1]
-        curvesf1_s2 = [lp,ldirf1_1,ldirf1_2,cf1_2]
-        curvesf1_s3 = [cf1_1,cf1_2]
-        curvesf1_s4 = [lp,cp1]
-        surfsf1 = []
-        surfsf1.append(geo.createSurfaceCurve2(curvesf1_s1))
-        surfsf1.append(geo.createSurfaceCurve2(curvesf1_s2))
-        surfsf1.append(geo.createSurfaceCurve2(curvesf1_s3))
-        surfsf1.append(geo.createSurfaceCurve2(curvesf1_s4))
-        volIDf1 = geo.createVolume(surfsf1)
-        #building filho2 -----------------------------------------------------------------
-        curvesf2_s1 = [lp,ldirf2_1,ldirf2_2,cf2_1]
-        curvesf2_s2 = [cp2,ldirf2_1,ldirf2_2,cf2_2]
-        curvesf2_s3 = [cf2_1,cf2_2]
-        curvesf2_s4 = [lp,cp2]
-        surfsf2 = []
-        surfsf2.append(geo.createSurfaceCurve2(curvesf2_s1))
-        surfsf2.append(geo.createSurfaceCurve2(curvesf2_s2))
-        surfsf2.append(geo.createSurfaceCurve2(curvesf2_s3))
-        surfsf2.append(geo.createSurfaceCurve2(curvesf2_s4))
-        volIDf2 = geo.createVolume(surfsf2)
-        vols = [volIDf1,volIDf2]
-        self.vols.append(geo.stepUnion(vols))
+            self.circles.append(self.root.cf1)   
     
     def genSon(self, angle):
         initialPoint = cubit.vertex(self.points[-2]).coordinates()
-        finalPoint = cubit.vertex(self.points[-1]).coordinates()
-        angles = geo.getAngles(initialPoint,finalPoint)  
+        finalPoint = cubit.vertex(self.points[-1]).coordinates() 
+#
+        coords = list(initialPoint)
+        geo.rotateAndMove(coords, initialPoint, 0, -90, self.raio)
+        vAuxRoot = geo.createVertex(coords[0],coords[1],coords[2])
+        coords = list(initialPoint)
+        geo.rotateAndMove(coords, initialPoint, 0, 90, self.raio)
+        vAuxRoot2 = geo.createVertex(coords[0],coords[1],coords[2])
+        initialLine = geo.createLine(vAuxRoot,vAuxRoot2)     
+        if angle > 0:
+            initialArc = geo.createCircleNormal2(self.points[-2],vAuxRoot2,vAuxRoot,self.raio,self.index)
+        else:
+            initialArc = geo.createCircleNormal2(self.points[-2],vAuxRoot,vAuxRoot2,self.raio,self.index)
 #        
-        coords = [initialPoint[0], initialPoint[1], initialPoint[2]]
-        geo.rotateAndMove(coords, initialPoint, -90, self.raio)
-        vAux = geo.createVertex(coords[0],coords[1],coords[2])
-        coords = [initialPoint[0], initialPoint[1], initialPoint[2]]
-        geo.rotateAndMove(coords, initialPoint, 90, self.raio)
-        vAux2 = geo.createVertex(coords[0],coords[1],coords[2])
-        lp = geo.createLine(vAux,vAux2)
-        cp1 = geo.createCircleNormal2(self.points[-2],vAux2,vAux,self.raio,self.index)
-        cp2 = geo.createCircleNormal2(self.points[-2],vAux,vAux2,self.raio,self.index)
-#   
-#        angle = (-30) * (math.pi/180)
-#        self.vf1 = geo.createVertex(0,0,0)
-#        coordsf1 = []
-#        coordsf1.append(0)
-#        coordsf1.append(0)
-#        coordsf1.append(0)
-#        origin = []
-#        origin.append(v1[0])
-#        origin.append(v1[1])
-#        origin.append(v1[2])
-#        geo.spheCoords(origin)
-#        coordsf1[0] += 2*(self.raio)
-#        angleR = geo.degreeToRadians(30)
-#       
+        coords = list(finalPoint)
+        geo.rotate2(coords, initialPoint, angle, 2*self.raio)
+        sonVertex = geo.createVertex(coords[0],coords[1],coords[2])   
+        alongLine = geo.createLine(sonVertex,self.points[-2])
+       
+        sonPoint = cubit.vertex(sonVertex).coordinates()
+        coords = list(sonPoint)
+        geo.rotateAndMove(coords, sonPoint, 0, -90, 0.75*self.raio)
+        vAuxSon = geo.createVertex(coords[0],coords[1],coords[2])
+        coords = list(sonPoint)
+        geo.rotateAndMove(coords, sonPoint, 0, 90, 0.75*self.raio)
+        vAuxSon2 = geo.createVertex(coords[0],coords[1],coords[2])
+        if angle > 0:
+            finalArc1 = geo.createCircleNormal2(sonVertex,vAuxSon2,vAuxSon,0.75*self.raio,self.index)
+            finalArc2 = geo.createCircleNormal2(sonVertex,vAuxSon,vAuxSon2,0.75*self.raio,self.index)
+        else:
+            finalArc1 = geo.createCircleNormal2(sonVertex,vAuxSon,vAuxSon2,0.75*self.raio,self.index)
+            finalArc2 = geo.createCircleNormal2(sonVertex,vAuxSon2,vAuxSon,0.75*self.raio,self.index)
+#
+        horizontalLine1 = geo.createLine(vAuxRoot,vAuxSon)
+        horizontalLine2 = geo.createLine(vAuxRoot2,vAuxSon2)
+        if angle < 0:
+            self.vf1 = sonVertex
+            self.cf1 = geo.createCircleNormal(sonVertex,0.75*self.raio,self.index)
+        else:
+            self.vf2 = sonVertex
+            self.cf2 = geo.createCircleNormal(sonVertex,0.75*self.raio,self.index)      
+#
+        curves_s1 = [initialArc,horizontalLine1,horizontalLine2,finalArc1]
+        curves_s2 = [initialLine,horizontalLine1,horizontalLine2,finalArc2]
+        curves_s3 = [finalArc1,finalArc2]
+        curves_s4 = [initialLine,initialArc]
+        surfs = []
+        surfs.append(geo.createSurfaceCurve2(curves_s1))
+        surfs.append(geo.createSurfaceCurve2(curves_s2))
+        surfs.append(geo.createSurfaceCurve2(curves_s3))
+        surfs.append(geo.createSurfaceCurve2(curves_s4))
+        return geo.createVolume(surfs)     
+    
+    def genSon2(self, angle):
+        initialPoint = cubit.vertex(self.points[-2]).coordinates()
+        finalPoint = cubit.vertex(self.points[-1]).coordinates() 
+        angles = geo.getAngles(initialPoint, finalPoint)
+        ay = geo.radiansToDegree(angles[0]+geo.degreeToRadians(-90))
+        az = geo.radiansToDegree(angles[1])
+        coords = list(initialPoint)
+        geo.rotateAndMove(coords, initialPoint, ay, -90, self.raio)
+        vAuxRoot1 = geo.createVertex(coords[0],coords[1],coords[2])
+        coords = list(initialPoint)
+        geo.rotateAndMove(coords, initialPoint, ay, 0, self.raio)
+        vAuxRoot2 = geo.createVertex(coords[0],coords[1],coords[2])
+        coords = list(initialPoint)
+        geo.rotateAndMove(coords, initialPoint, ay, 90, self.raio)
+        vAuxRoot3 = geo.createVertex(coords[0],coords[1],coords[2])
+        coords = list(initialPoint)
+        geo.rotateAndMove(coords, initialPoint, ay, 180, self.raio)
+        vAuxRoot4 = geo.createVertex(coords[0],coords[1],coords[2])     
+        if angle > 0:
+            initialArc1 = geo.createCircleNormal2(self.points[-2],vAuxRoot4,vAuxRoot1,self.raio,self.index)
+            initialArc2 = geo.createCircleNormal2(self.points[-2],vAuxRoot3,vAuxRoot4,self.raio,self.index)
+            coords = list(initialPoint)
+            ay2 = geo.radiansToDegree(angles[0]+geo.degreeToRadians(-90))
+            geo.rotateAndMove(coords, initialPoint, ay2, 0, self.raio/2)
+            pivo = geo.createVertex(coords[0],coords[1],coords[2])
+            initialLine1 = geo.createEllipse(vAuxRoot3,pivo,self.points[-2])
+            initialLine2 = geo.createEllipse(vAuxRoot1,pivo,self.points[-2])
+            #initialLine1 = geo.createLine(vAuxRoot3,self.points[-2])
+            #initialLine2 = geo.createLine(self.points[-2],vAuxRoot1)   
+        else:
+            initialArc1 = geo.createCircleNormal2(self.points[-2],vAuxRoot1,vAuxRoot2,self.raio,self.index)
+            initialArc2 = geo.createCircleNormal2(self.points[-2],vAuxRoot2,vAuxRoot3,self.raio,self.index)
+            coords = list(initialPoint)
+            ay2 = geo.radiansToDegree(angles[0]+geo.degreeToRadians(90))
+            geo.rotateAndMove(coords, initialPoint, ay2, 0, self.raio/2)
+            pivo = geo.createVertex(coords[0],coords[1],coords[2])
+            initialLine1 = geo.createEllipse(vAuxRoot3,pivo,self.points[-2])
+            initialLine2 = geo.createEllipse(vAuxRoot1,pivo,self.points[-2])
+            #initialLine1 = geo.createLine(self.points[-2],vAuxRoot3)
+            #initialLine2 = geo.createLine(vAuxRoot1,self.points[-2])   
+        
+        coords = list(finalPoint)
+        geo.rotate2(coords, initialPoint, angle, 2*self.raio)
+        sonVertex = geo.createVertex(coords[0],coords[1],coords[2])   
+        alongLine = geo.createLine(sonVertex,self.points[-2])
+       
+        sonPoint = cubit.vertex(sonVertex).coordinates()
+        coords = list(sonPoint)
+        geo.rotateAndMove(coords, sonPoint, ay, -90, 0.75*self.raio)
+        vAuxSon1 = geo.createVertex(coords[0],coords[1],coords[2])
+        coords = list(sonPoint)
+        geo.rotateAndMove(coords, sonPoint, ay, 0, 0.75*self.raio)
+        vAuxSon2 = geo.createVertex(coords[0],coords[1],coords[2])
+        coords = list(sonPoint)
+        geo.rotateAndMove(coords, sonPoint, ay, 90, 0.75*self.raio)
+        vAuxSon3 = geo.createVertex(coords[0],coords[1],coords[2])
+        coords = list(sonPoint)
+        geo.rotateAndMove(coords, sonPoint, ay, 180, 0.75*self.raio)
+        vAuxSon4 = geo.createVertex(coords[0],coords[1],coords[2])
+        
+        if angle > 0:
+            finalArc1 = geo.createCircleNormal2(sonVertex,vAuxSon4,vAuxSon1,0.75*self.raio,self.index)
+            finalArc2 = geo.createCircleNormal2(sonVertex,vAuxSon3,vAuxSon4,0.75*self.raio,self.index)
+            finalArc3 = geo.createCircleNormal2(sonVertex,vAuxSon2,vAuxSon3,0.75*self.raio,self.index)
+            finalArc4 = geo.createCircleNormal2(sonVertex,vAuxSon1,vAuxSon2,0.75*self.raio,self.index)
+            horizontalLine1 = geo.createLine(vAuxRoot1,vAuxSon1)  
+            horizontalLine2 = geo.createLine(vAuxRoot4,vAuxSon4) 
+            horizontalLine3 = geo.createLine(vAuxRoot3,vAuxSon3)
+            horizontalLine4 = geo.createLine(pivo,vAuxSon2)
+        else:
+            finalArc1 = geo.createCircleNormal2(sonVertex,vAuxSon1,vAuxSon2,0.75*self.raio,self.index)
+            finalArc2 = geo.createCircleNormal2(sonVertex,vAuxSon2,vAuxSon3,0.75*self.raio,self.index)
+            finalArc3 = geo.createCircleNormal2(sonVertex,vAuxSon3,vAuxSon4,0.75*self.raio,self.index)
+            finalArc4 = geo.createCircleNormal2(sonVertex,vAuxSon4,vAuxSon1,0.75*self.raio,self.index)
+            horizontalLine1 = geo.createLine(vAuxRoot1,vAuxSon1)
+            horizontalLine2 = geo.createLine(vAuxRoot2,vAuxSon2)
+            horizontalLine3 = geo.createLine(vAuxRoot3,vAuxSon3)
+            horizontalLine4 = geo.createLine(pivo,vAuxSon4) 
+        if angle < 0:
+            self.vf1 = sonVertex
+            self.cf1 = geo.createCircleNormal(sonVertex,0.75*self.raio,self.index)
+        else:
+            self.vf2 = sonVertex
+            self.cf2 = geo.createCircleNormal(sonVertex,0.75*self.raio,self.index)      
+
+        curves_s1 = [initialArc1,horizontalLine1,horizontalLine2,finalArc1]
+        curves_s2 = [initialArc2,horizontalLine2,horizontalLine3,finalArc2]
+        curves_s3 = [initialLine1,horizontalLine3,horizontalLine4,finalArc3]
+        curves_s4 = [initialLine2,horizontalLine4,horizontalLine1,finalArc4]
+        curves_s5 = [finalArc1,finalArc2,finalArc3,finalArc4]
+        curves_s6 = [initialLine1,initialLine2,initialArc1,initialArc2]
+        surfs = []
+        surfs.append(geo.createSurfaceCurve2(curves_s1))
+        surfs.append(geo.createSurfaceCurve2(curves_s2))
+        surfs.append(geo.createSurfaceCurve2(curves_s3))
+        surfs.append(geo.createSurfaceCurve2(curves_s4))
+        surfs.append(geo.createSurfaceCurve2(curves_s5))
+        surfs.append(geo.createSurfaceCurve2(curves_s6))
+        return geo.createVolume(surfs)
         
     def clean(self):
         for p in self.points:

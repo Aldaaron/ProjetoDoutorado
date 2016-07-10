@@ -19,7 +19,6 @@ def main():
     arvore.genCenterlines()
     arvore.genVolume()
     arvore.union()
-    #arvore.clean()
-
+    arvore.clean()
 
 main()

@@ -2,6 +2,8 @@ import geo
 from vessel import Vessel
 import cubit
 import math
+import random
+from settings import *
 
 class Tree(object):
 
@@ -20,6 +22,11 @@ class Tree(object):
                     pip = self.points[int(self.links[p][0])]
                     pi = self.points[int(self.links[f][0])]
                     pf = self.points[int(self.links[f][1])]
+                    d = geo.distance(pi, pf)
+                    angles = geo.getAngles(pip, pi)
+                    ay = geo.radiansToDegree(angles[0])
+                    az = geo.radiansToDegree(angles[1])
+                       
                     deltaY = pi[0]-pip[0];
                     deltaX = pi[1]-pip[1];
                     #deltaZ = pi[2]-pip[2];
@@ -42,9 +49,13 @@ class Tree(object):
                         positive = False
                     if abs(a) > 50:
                         dif = abs(a) - 50
+                        dif2 = abs(a)
                         if positive:
                             dif = -dif
-                        geo.rotate(pf,pi,dif)                   
+                            dif2= -dif2
+                        geo.rotate(pf,pi,dif)   
+                        if (d*scale) < (self.links[f][2]*6):
+                            geo.rotateAndMove(pf, pip, dif2, 0, (0.5*6)/scale)                        
         for p in range(0, len(self.links)):
             if len(self.linksFilhos[p]) == 2:
                 f1 = self.linksFilhos[p][0]
@@ -86,13 +97,12 @@ class Tree(object):
                 positive = True
                 if a2 < 0:
                     positive = False
-                if abs(a) < 10:
-                    dif = 10 - abs(a)
+                if abs(a) < 20:
+                    dif = 20 - abs(a)
                     if positive:
                         dif = -dif  
                     geo.rotate(f1f,f1i,dif)   
-            
-        
+                  
     def genVertices(self, scale):
         for p in self.points:
             vertexID = geo.createVertex(p[0]*scale,p[1]*scale,p[2]*scale)
@@ -115,25 +125,61 @@ class Tree(object):
                     root.son2 = vessel 
                     root.nSons += 1
             
-    def genVolume(self):
+    def genSurfaces(self):
+        i = 0
         for v in self.vessels:
-            cod = v.genVolume()
-            if cod == -1:
-                return
+            v.genSurfaces2()
+            #v.genVolume()
             
     def union(self):
-        vols = []
-        for v in self.vessels:
-            vols.append(v.volID)
-        #geo.union(vols)
-        geo.stepUnion(vols)
-        self.vol = vols[0]
+        geo.imprintMergeAll()
+        self.vol = self.vessels[0].volID
+        geo.unionAll()
+        geo.colorVolume(self.vol, "red")
     
     def clean(self):
         for v in self.vessels:
             v.clean()
-            
     
+    def genPoints(self):
+        vertexID = geo.createVertex(self.points[0][0],self.points[0][1],self.points[0][2])
+        VI = vertexID
+        points = []
+        points.append(VI)
+        for x in range(0, len(self.points)-1):
+            vertexID = geo.createVertex(self.points[x+1][0],self.points[x+1][1],self.points[x+1][2])
+            VF = vertexID
+            lineID = geo.createLine(VI,VF)
+            points.append(vertexID)
+            dist = cubit.get_distance_between(VI, VF)
+            #np = 4
+            #np += int(dist/(self.raio*2))
+            np = 10
+            inc = 1.0/np
+            for x in range(1, np):
+                vertexID = geo.createVertexOnCurveFraction(lineID, inc*x)
+                points.append(vertexID)
+            points.append(VF)
+            VI = VF
+        pts = []
+        for x in range(0, len(points)-1):
+            pt1 = cubit.vertex(points[x]).coordinates()
+            pt2 = cubit.vertex(points[x+1]).coordinates()
+            for k in range(0, 100):
+                rx = random.random()*0.5
+                ry = random.random()*0.5
+                rz = random.random()*0.5
+                pt = [pt1[0]+rx, pt1[1]+ry, pt1[2]+rz]
+                pts.append(pt)
+        target = open("nodes.node", 'w')
+        target.truncate()
+        target.write("# Node count, 3 dim, no attribute, no boundary marker\n")
+        target.write("%d  3  0  0\n" % (len(pts)))
+        target.write("# Node index, node coordinates\n")
+        for x in range(0, len(pts)):
+            target.write("%d  %f %f %f\n" % (x+1,pts[x][0],pts[x][1],pts[x][2]))
+        target.close()
+        
     def mesh(self):
         cubit.cmd("volume %d scheme Tetmesh \n" % (self.vol))
         #cubit.cmd("set tetmesher interior points on \n")

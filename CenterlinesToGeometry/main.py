@@ -13,12 +13,14 @@ def main():
     pontos = [ map(float,line.split('\t')) for line in fp ]
     fl = open(folder+"linhas.txt")
     linhas = [ map(float,line.split('\t')) for line in fl ]
+    for l in linhas:
+        l[2] = 0.5
     arvore = Tree(pontos, linhas)
+    #arvore.genPoints()
     arvore.preProcess()
     arvore.genVertices(scale)
     arvore.genCenterlines()
-    arvore.genVolume()
-    arvore.union()
-    arvore.clean()
-
+    arvore.genSurfaces()
+    arvore.union()     
+    #arvore.clean()
 main()

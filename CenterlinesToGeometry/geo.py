@@ -94,6 +94,16 @@ def createArc(r,c,n,sa,ea):
     arcID = cubit.get_last_id("curve")
     printM("new Curve " + str(arcID) + " created")
     return arcID
+
+def createCombineCurve(curves):
+    cs = ""
+    for c in curves:
+        cs += str(c) + " "
+    printM("create curve combine curve %s" % (cs))
+    cubit.cmd("create curve combine curve %s" % (cs))
+    curveID = cubit.get_last_id("curve")
+    printM("new Curve " + str(curveID) + " created")
+    return curveID 
     
 def createSweep(s,c):
     printM("sweep surface %d along curve %d" % (s,c))
@@ -150,18 +160,61 @@ def createVolume(surfs):
     ss = ""
     for s in surfs:
         ss += str(s) + " "
-    printM("create volume surface %s heal keep" % (ss))
-    cubit.cmd("create volume surface %s heal keep \n" % (ss))
+    printM("create volume surface %s" % (ss))
+    cubit.cmd("create volume surface %s\n" % (ss))
     volID = cubit.get_last_id("volume")
     printM("new Volume " + str(volID) + " created")
     return volID
+
+def createVolumeFromAllSurfaces():
+    printM("create volume surface all noheal")
+    cubit.cmd("create volume surface all noheal\n")
+    volID = cubit.get_last_id("volume")
+    printM("new Volume " + str(volID) + " created")
+    return volID
+
+def imprintMergeAll():
+    printM("imprint and merge all")
+    cubit.cmd("imprint all")
+    cubit.cmd("merge all")
+
+def imprintBody(bodies):
+    bs = ""
+    for b in bodies:
+        bs += str(b) + " "
+    printM("imprint body %s" % (bs))
+    cubit.cmd("imprint body %s" % (bs))
     
-def union(vols):
-    vs = ""
-    for v in vols:
-        vs += str(v) + " "
-    printM("unite volume %s keep" % (vs))
-    cubit.cmd("unite volume %s keep \n" % (vs))
+def mergeBody(bodies):
+    bs = ""
+    for b in bodies:
+        bs += str(b) + " "
+    printM("merge body %s" % (bs))
+    cubit.cmd("merge body %s" % (bs))
+    
+def imprintVolumes(v1,v2):
+    printM("imprint volume %d %d" % (v1,v2))
+    cubit.cmd("imprint volume %d %d" % (v1,v2))
+    
+def mergeVolumes(v1,v2):
+    printM("merge volume %d %d" % (v1,v2))
+    cubit.cmd("merge volume %d %d" % (v1,v2))
+    
+def unionAll():
+    printM("unite volume all")
+    cubit.cmd("unite volume all\n")
+
+def unionVolumes(v1, v2):
+    printM("unite volume %d %d" % (v1, v2))
+    cubit.cmd("unite volume %d %d\n"% (v1, v2))
+    return v1
+
+def createEllipseFull(v1,v2,v3):
+    printM("create curve vertex %d %d %d  ellipse first angle 0 last angle 360 " % (v1,v2,v3))
+    cubit.cmd("create curve vertex %d %d %d  ellipse first angle 0 last angle 360 " % (v1,v2,v3))
+    ellipseID = cubit.get_last_id("curve")
+    printM("new Curve " + str(ellipseID) + " created")
+    return ellipseID
 
 def stepUnion(vols):
     volID = vols[0]
@@ -291,6 +344,10 @@ def rotate2(point, origin, angle, dist):
     point[0] = coords[0] + origin[0]
     point[1] = coords[1] + origin[1]
     point[2] = coords[2] + origin[2]
+
+def colorVolume(v,c):
+    printM("color volume %d %s" % (v,c))
+    cubit.cmd("color volume %d %s" % (v,c))
 
 def printM(s):
     if manualPrint:

@@ -2,11 +2,12 @@ import cubit
 import sys
 import os
 
-scale = 10
+scale = 1000
 #folder = "/home/bruno/UFJF-PROJETO/Arvore_Teste/"
 #folder = "/home/bruno/UFJF-PROJETO/teste/"
-folder = "/home/bruno/UFJF-PROJETO/ArvoreN4/"
-#folder = "/home/bruno/UFJF-PROJETO/ArvoreN25/"
-cubitPrint = False
+#folder = "/home/bruno/UFJF-PROJETO/ArvoreN4/"
+folder = "/home/bruno/UFJF-PROJETO/ArvoreN25/"
+cubitPrint = True
 manualPrint = False
 tol = 0.001
+nSplit = 4

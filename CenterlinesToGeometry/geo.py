@@ -31,6 +31,13 @@ def createSpline(v1,v2,v3):
     printM("new Curve " + str(splineID) + " created")
     return splineID
 
+def splitCurve(c,v):
+    printM("split curve %d at vertex %d" % (c,v))
+    cubit.cmd("split curve %d at vertex %d" % (c,v))
+    splineID = cubit.get_last_id("curve")
+    printM("new Curve " + str(splineID) + " created")
+    return splineID
+
 def createSpline2(pts):
     points = ""
     for p in pts:

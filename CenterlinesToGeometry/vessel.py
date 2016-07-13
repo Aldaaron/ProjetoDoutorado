@@ -8,6 +8,7 @@ class Vessel(object):
 
     def __init__(self, index, vI, vF, raio, root):
         self.index = index
+        self.index2 = index
         self.vI = vI
         self.vF = vF
         self.raio = raio
@@ -36,10 +37,13 @@ class Vessel(object):
         self.points.append(self.vI)
         dist = cubit.get_distance_between(self.vI, self.vF)
         np = 4
-        #np += int(dist/(self.raio*10))
+        np += int(dist/(self.raio*5))
         inc = 1.0/np
         for x in range(1, np):
-            vertexID = geo.createVertexOnCurveFraction(self.index, inc*x)
+            if self.root is not None and x >= np-2:
+                vertexID = geo.createVertexOnCurveFraction(self.index, inc*x)
+            else:
+                vertexID = geo.createVertexOnCurveFraction(self.index2, inc*x)
             self.points.append(vertexID)
         self.points.append(self.vF)
         
@@ -162,18 +166,29 @@ class Vessel(object):
             if d1<d2:
                 self.vI = self.root.vf1
                 lineID = geo.createLine(self.root.vf1,self.vF)
+                lineIDAux = geo.createSpline(self.root.points[-2], self.root.vf1,self.vF)
+                print [self.root.points[-2], self.root.vf1,self.vF]
+                lineID2 = geo.splitCurve(lineIDAux, self.root.vf1)
                 self.index = lineID
+                self.index2 = lineID2
                 self.circles.append(self.root.cf1)
             else:
                 self.vI = self.root.vf2 
                 lineID = geo.createLine(self.root.vf2,self.vF)
+                lineIDAux = geo.createSpline(self.root.points[-2],self.root.vf2,self.vF)
+                print [self.root.points[-2], self.root.vf1,self.vF]
+                lineID2 = geo.splitCurve(lineIDAux, self.root.vf2)
                 self.index = lineID
+                self.index2 = lineID2
                 self.circles.append(self.root.cf2)
         else:
             self.vI = self.root.vf1
             lineID = geo.createLine(self.root.vf1,self.vF)
+            lineIDAux = geo.createSpline(self.root.points[-2], self.root.vf1,self.vF)
+            lineID2 = geo.splitCurve(lineIDAux, self.root.vf1)
             self.index = lineID
-            self.circles.append(self.root.cf1)   
+            self.index2 = lineID2
+            self.circles.append(self.root.cf1)     
             
     def genSurfaces2(self):
         if self.root is not None:
@@ -182,23 +197,35 @@ class Vessel(object):
         if self.nSons == 2:
             if self.root is None:
                 for x in range(0, len(self.points)-2):
-                    circleID = geo.createCircleNormal(self.points[x],self.raio,self.index)
+                    circleID = geo.createCircleNormal(self.points[x],self.raio,self.index2)
                     self.circles.append(circleID)
             else:
                 for x in range(1, len(self.points)-2):
                     raio = (x*self.raio + (len(self.points)-2-x) * self.root.raio*0.75) / (len(self.points)-2)
-                    circleID = geo.createCircleNormal(self.points[x],raio,self.index)
+                    circleID = geo.createCircleNormal(self.points[x],raio,self.index2)
                     self.circles.append(circleID)
             linksF1 = self.genSon2(-30)
             linksF2 = self.genSon2(30)
             linkCircles = []
             linkCircles.extend(linksF1)
             linkCircles.extend(linksF2)
-
+#             circleID = geo.createCombineCurve(linkCircles)
+#             self.circles.append(circleID)
             geo.imprintVolumes(self.volf1, self.volf2)
             geo.mergeVolumes(self.volf1, self.volf2)
             volFilhos = geo.unionVolumes(self.volf1, self.volf2)
-            circleID = geo.createCombineCurve(linkCircles)
+            initialPoint = cubit.vertex(self.points[-2]).coordinates()
+            finalPoint = cubit.vertex(self.points[-1]).coordinates() 
+            angles = geo.getAngles(initialPoint, finalPoint)
+            ay = geo.radiansToDegree(angles[0]+geo.degreeToRadians(-90))
+            az = geo.radiansToDegree(angles[1])
+            coords = list(initialPoint)
+            geo.rotateAndMove(coords, initialPoint, ay, -90, self.raio)
+            vEli2 = geo.createVertex(coords[0],coords[1],coords[2])
+            coords = list(initialPoint)
+            geo.rotateAndMove(coords, initialPoint, ay, 0, self.raio)
+            vEli1 = geo.createVertex(coords[0],coords[1],coords[2])
+            circleID = geo.createEllipseFull(vEli1, vEli2, self.points[-2])
             self.circles.append(circleID)
 
             surfs = []
@@ -227,9 +254,9 @@ class Vessel(object):
                 for x in range(1, len(self.points)):
                     raio = (x*self.raio + (len(self.points)-1-x) * self.root.raio*0.75) / (len(self.points)-1)
                     if x < len(self.points)-2:
-                        circleID = geo.createCircleNormal(self.points[x],raio,self.index)
+                        circleID = geo.createCircleNormal(self.points[x],raio,self.index2)
                     else:
-                        circleID = geo.createCircleNormal(self.points[x],raio,self.index)
+                        circleID = geo.createCircleNormal(self.points[x],raio,self.index2)
                     self.circles.append(circleID)
             surfs = []
             surfID = geo.createSurfaceCurve(self.circles[0])

@@ -98,9 +98,10 @@ class Tree(object):
                 if a2 < 0:
                     positive = False
                 if abs(a) < 20:
-                    dif = 20 - abs(a)
+                    dif = 25 - abs(a)
                     if positive:
                         dif = -dif  
+                    print "aaaaaaaaaa"
                     geo.rotate(f1f,f1i,dif)   
                   
     def genVertices(self, scale):
@@ -126,7 +127,6 @@ class Tree(object):
                     root.nSons += 1
             
     def genSurfaces(self):
-        i = 0
         for v in self.vessels:
             v.genSurfaces2()
             #v.genVolume()

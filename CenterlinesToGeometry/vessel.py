@@ -42,115 +42,6 @@ class Vessel(object):
             vertexID = geo.createVertexOnCurveFraction(self.index, inc*x)
             self.points.append(vertexID)
         self.points.append(self.vF)
-        
-    def genSegment(self, vi, vf, normal, raio, linkCurves):
-        initialPoint = cubit.vertex(vi).coordinates()
-        finalPoint = cubit.vertex(vf).coordinates() 
-        angles = geo.getAngles(initialPoint, finalPoint)
-        ay = geo.radiansToDegree(angles[0]+geo.degreeToRadians(-90))
-        inc = 360/nSplit
-        pi = []
-        arcsi = []
-        if linkCurves is None:
-            for i in xrange(-180,180, inc):
-                coords = list(initialPoint)
-                geo.rotateAndMove(coords, initialPoint, ay, i, raio)
-                p = geo.createVertex(coords[0],coords[1],coords[2])
-                pi.append(p)
-            for i in range(0,len(pi)-1):
-                arc = geo.createCircleNormal2(vi,pi[i],pi[i+1],raio,normal)
-                arcsi.append(arc)
-            arc = geo.createCircleNormal2(vi,pi[-1],pi[0],raio,normal)
-            arcsi.append(arc)
-        else:
-            for i in range(0,len(linkCurves)/2):
-                pi.append(linkCurves[(len(linkCurves)/2)+i])
-                arcsi.append(linkCurves[i])
-        pf = []
-        arcsf = []
-        for i in xrange(-180,180, inc):
-            coords = list(finalPoint)
-            geo.rotateAndMove(coords, finalPoint, ay, i, raio)
-            p = geo.createVertex(coords[0],coords[1],coords[2])
-            pf.append(p)
-        for i in range(0,len(pf)-1):
-            arc = geo.createCircleNormal2(vf,pf[i],pf[i+1],raio,normal)
-            arcsf.append(arc)
-        arc = geo.createCircleNormal2(vf,pf[-1],pf[0],raio,normal)
-        arcsf.append(arc)
-        horizontals = []
-        for i in range(0,len(pf)):
-            horizontals.append(geo.createLine(pi[i],pf[i]))
-        curves = []
-        for i in range(0,nSplit-1):
-            curves = [arcsi[i],horizontals[i],horizontals[i+1],arcsf[i]]
-            surf = geo.createSurfaceCurve2(curves)
-            self.surfs.append(surf)
-        curves = [arcsi[-1],horizontals[-1],horizontals[0],arcsf[-1]]
-        surf = geo.createSurfaceCurve2(curves)
-        self.surfs.append(surf)
-        if vi == self.vI:
-            self.surfs.append(geo.createSurfaceCurve2(arcsi))
-        nextLinkElements = []
-        nextLinkElements.extend(arcsf)
-        nextLinkElements.extend(pf)
-        return nextLinkElements
-    
-    def linkToRoot(self):
-        if self.root.nSons == 2:
-            otherSon = self.root.son1
-            if otherSon == self:
-                otherSon = self.root.son2
-            d1 = cubit.get_distance_between(self.vF, self.root.vf1)+cubit.get_distance_between(otherSon.vF, self.root.vf2)
-            d2 = cubit.get_distance_between(self.vF, self.root.vf2)+cubit.get_distance_between(otherSon.vF, self.root.vf1)
-            if d1<d2:
-                self.vI = self.root.vf1
-                lineID = geo.createLine(self.vI,self.vF)
-                self.index = lineID
-                linkCircles = self.root.linkCirclesf1
-            else:
-                self.vI = self.root.vf2 
-                lineID = geo.createLine(self.vI,self.vF)
-                self.index = lineID
-                linkCircles = self.root.linkCirclesf2
-        else:
-            self.vI = self.root.vf1
-            lineID = geo.createLine(self.vI,self.vF)
-            self.index = lineID
-            linkCircles = self.root.linkCirclesf1 
-        return linkCircles
-
-    def genSurfaces(self):
-        nextLinkElements = None
-        if self.root is not None:
-            nextLinkElements = self.linkToRoot()
-        self.genIntervals()
-        if self.nSons == 2:
-            for i in range(0, len(self.points)-2):
-                raio = self.raio
-                if self.root is not None:
-                    if i == 0:
-                        raio = 0.75*self.root.raio
-                    else:
-                        raio = (i*self.raio + (len(self.points)-2-i) * self.root.raio*0.75) / (len(self.points)-2)
-                nextLinkElements = self.genSegment(self.points[i], self.points[i+1], self.index, raio, nextLinkElements)
-            self.genSon(nextLinkElements, 20)
-            self.genSon(nextLinkElements, -20)
-        else:
-            for i in range(0, len(self.points)-1):
-                raio = self.raio
-                if self.root is not None:
-                    if i == 0:
-                        raio = 0.75*self.root.raio
-                    else:
-                        raio = (i*self.raio + (len(self.points)-1-i) * self.root.raio*0.75) / (len(self.points)-1)
-                nextLinkElements = self.genSegment(self.points[i], self.points[i+1], self.index, raio, nextLinkElements)
-            self.vf1 = self.vF
-            self.linkCirclesf1 = nextLinkElements
-            close = []
-            for i in range(0, (len(nextLinkElements)/2)):
-                close.append(nextLinkElements[i])
-            self.surfs.append(geo.createSurfaceCurve2(close))
             
     def linkToRoot2(self):
         if self.root.nSons == 2:
@@ -174,6 +65,10 @@ class Vessel(object):
             lineID = geo.createLine(self.root.vf1,self.vF)
             self.index = lineID
             self.circles.append(self.root.cf1) 
+            
+    def genSurfaces(self):
+        a = 1
+        
     
     def genSurfaces2(self):
         if self.root is not None:
@@ -199,19 +94,6 @@ class Vessel(object):
             geo.imprintVolumes(self.volf1, self.volf2)
             geo.mergeVolumes(self.volf1, self.volf2)
             volFilhos = geo.unionVolumes(self.volf1, self.volf2)
-#             initialPoint = cubit.vertex(self.points[-2]).coordinates()
-#             finalPoint = cubit.vertex(self.points[-1]).coordinates() 
-#             angles = geo.getAngles(initialPoint, finalPoint)
-#             ay = geo.radiansToDegree(angles[0]+geo.degreeToRadians(-90))
-#             az = geo.radiansToDegree(angles[1])
-#             coords = list(initialPoint)
-#             geo.rotateAndMove(coords, initialPoint, ay, -90, self.raio)
-#             vEli2 = geo.createVertex(coords[0],coords[1],coords[2])
-#             coords = list(initialPoint)
-#             geo.rotateAndMove(coords, initialPoint, ay, 0, self.raio)
-#             vEli1 = geo.createVertex(coords[0],coords[1],coords[2])
-#             circleID = geo.createEllipseFull(vEli1, vEli2, self.points[-2])
-#             self.circles.append(circleID)
 
             surfs = []
             surfID = geo.createSurfaceCurve(self.circles[0])
@@ -257,85 +139,6 @@ class Vessel(object):
             if self.nSons == 1:
                 self.vf1 = self.vF
                 self.cf1 = self.circles[-1]
-    
-    def genSon(self, nextLinkElements, angle):
-        coords = list(cubit.vertex(self.points[-1]).coordinates())
-        geo.rotate2(coords, cubit.vertex(self.points[-2]).coordinates() , angle, 2*self.raio)
-        sonVertex = geo.createVertex(coords[0],coords[1],coords[2])   
-        alongLine = geo.createLine(self.points[-2],sonVertex)
-        initialPoint = cubit.vertex(self.points[-2]).coordinates()
-        finalPoint = cubit.vertex(sonVertex).coordinates() 
-        angles = geo.getAngles(initialPoint, finalPoint)
-        ay = geo.radiansToDegree(angles[0]+geo.degreeToRadians(-90)) 
-        piAux = [] 
-        arcsiAux = [] 
-        for i in range(0, len(nextLinkElements)/2):
-            piAux.append(nextLinkElements[len(nextLinkElements)/2+i]) 
-            arcsiAux.append(nextLinkElements[i])
-        inc = 360/nSplit
-        pi = []
-        arcsi = []
-        if angle > 0:
-            self.splitPoints = []
-            self.splitLines = []
-            sl = geo.createLine(piAux[(len(piAux)/4)],piAux[((len(piAux)*3)/4)])
-            for i in xrange(0,180, inc):
-                pct = float(i)/180
-                self.splitPoints.append(geo.createVertexOnCurveFraction(sl, pct))
-            self.splitPoints.append(piAux[((len(piAux)*3)/4)])
-            self.splitPoints[0] = piAux[(len(piAux)/4)]
-            self.splitPoints[len(self.splitPoints)/2] = self.points[-2]
-            for i in range(0,len(self.splitPoints)-1):
-                self.splitLines.append(geo.createLine(self.splitPoints[i],self.splitPoints[i+1])) 
-            for i in range(0,(len(piAux)/4)):  
-                pi.append(piAux[i])
-                arcsi.append(arcsiAux[i])
-            for i in range(0,len(self.splitPoints)-1):
-                pi.append(self.splitPoints[i])
-                arcsi.append(self.splitLines[i])
-            for i in range((len(piAux)*3)/4,len(piAux)):  
-                pi.append(piAux[i])
-                arcsi.append(arcsiAux[i])
-        else:
-            for i in range(0,len(self.splitPoints)/2):
-                pi.append(self.splitPoints[(len(self.splitPoints)/2)-i])
-                arcsi.append(self.splitLines[(len(self.splitLines)/2)-1-i])
-            for i in range((len(piAux)/4),(len(piAux)*3)/4):  
-                pi.append(piAux[i])
-                arcsi.append(arcsiAux[i])
-            for i in range(0,len(self.splitPoints)/2):
-                pi.append(self.splitPoints[-i-1])
-                arcsi.append(self.splitLines[-i-1])
-        sonPoint = cubit.vertex(sonVertex).coordinates()
-        pf = []
-        arcsf = []
-        for i in xrange(-180,180, inc):
-            coords = list(sonPoint)
-            geo.rotateAndMove(coords, sonPoint, ay, i, 0.75*self.raio)
-            pf.append(geo.createVertex(coords[0],coords[1],coords[2]))
-        for i in range(0,len(pf)-1):
-            arc = geo.createCircleNormal2(sonVertex,pf[i],pf[i+1],0.75*self.raio,alongLine)
-            arcsf.append(arc)
-        arc = geo.createCircleNormal2(sonVertex,pf[-1],pf[0],0.75*self.raio,alongLine)
-        arcsf.append(arc)
-        horizontals = []
-        for i in range(0,nSplit):
-            horizontals.append(geo.createLine(pi[i],pf[i]))
-        curves = []
-        for i in range(0,nSplit-1):
-            curves = [arcsi[i],horizontals[i],horizontals[i+1],arcsf[i]]
-            self.surfs.append(geo.createSurfaceCurve2(curves))
-        curves = [arcsi[-1],horizontals[-1],horizontals[0],arcsf[-1]]
-        self.surfs.append(geo.createSurfaceCurve2(curves))
-        if angle > 0:
-            self.vf1 = sonVertex
-            self.linkCirclesf1 = list(arcsf)
-            self.linkCirclesf1.extend(pf)
-        else:
-            self.vf2 = sonVertex  
-            self.linkCirclesf2 = list(arcsf)
-            self.linkCirclesf2.extend(pf)  
-        self.surfs.append(geo.createSurfaceCurve2(arcsf))
     
     def genSon2(self, angle):
         initialPoint = cubit.vertex(self.points[-2]).coordinates()

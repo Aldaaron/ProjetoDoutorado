@@ -40,6 +40,11 @@ def createEllipse(v1,v2,v3):
     cubit.cmd("create curve vertex %d vertex %d vertex %d  ellipse" % (v1,v2,v3))
     ellipseID = cubit.get_last_id("curve")
     return ellipseID
+
+def createEllipseFull(v1,v2,v3):
+    cubit.cmd("create curve vertex %d vertex %d vertex %d  ellipse start angle 0 stop angle 360" % (v1,v2,v3))
+    ellipseID = cubit.get_last_id("curve")
+    return ellipseID
     
 def createVertexOnCurveFraction(c,f):
     cubit.cmd("create vertex on curve %d fraction %f from start" % (c,f))
@@ -178,6 +183,9 @@ def alignVolume(v,s1,s2):
 
 def colorVolume(v,c):
     cubit.cmd("color volume %d %s" % (v,c))
+
+def colorVolume2(c):
+    cubit.cmd("color volume all %s" % (c))
 
 def deleteVolume(v):
     cubit.cmd("delete Volume %d" % (v))

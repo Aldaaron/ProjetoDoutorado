@@ -8,9 +8,10 @@ import geo
 import geo2
 
 def main():
-    fp = open(folder+"pontos2.txt")
+    cubit.cmd("set warning off")
+    fp = open(folder+"pontos3.txt")
     pontos = [ map(float,line.split('\t')) for line in fp ]
-    fl = open(folder+"linhas2.txt")
+    fl = open(folder+"linhas3.txt")
     linhas = [ map(float,line.split('\t')) for line in fl ]
 #     for l in linhas:
 #         l[2] = 0.5
@@ -23,11 +24,16 @@ def main():
 #     arvore.union()     
     #arvore.clean() 
     arvore = Arvore(pontos, linhas)
+#    arvore.fixSizes()
 #    arvore.draw()
-#    arvore.split3()
+#    arvore.imprime()
+#    arvore.split2()
+#    arvore.split()
 #    arvore.smoth()
-#    arvore.save()
+#    arvore.smoth2()
+#    arvore.save2()
     arvore.makeGeometry()
+#    arvore.check()
     fp.close()
     fl.close()
     

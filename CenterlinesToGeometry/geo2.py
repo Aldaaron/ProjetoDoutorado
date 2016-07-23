@@ -1,5 +1,6 @@
 import math
 import sys
+import geo
 
 #Carrega a matriz identidade em "matrix"
 def getIdentity():
@@ -120,119 +121,40 @@ def normalizeVector(vec):
 def normVector(vect):
     return math.sqrt((vect[0]*vect[0])+(vect[1]*vect[1])+(vect[2]*vect[2]))
 
-# def invertMatrix(dest, src):
-#     b = getIdentity()
-#     index = [0.0,0.0,0.0,0.0]
-#     for i in range(0, 4):
-#         index[i] = 0
-#         for j in range(0, 4):
-#             if (i==j):
-#                 b[i][j] = 1
-#             else:
-#                 b[i][j] = 0
-#         dest[i][j] = 0
-# #     gaussian(src, index);
-# 
-# #     for i in range(0, 3):
-# #         for j in range(i+1, 4):
-# #             for k in range(0, 4):
-# #                 b[index[j]][k] -= src[index[j]][i]*b[index[i]][k]
-# # 
-# #     for i in range(0, 4):
-# #         dest[4-1][i] = b[index[4-1]][i]/src[index[4-1]][4-1]
-# #         for j in range(2, -1,-1):
-# #             dest[j][i] = b[index[j]][i]
-# #             for k in range(j+1, 4):
-# #                 dest[j][i] -= src[index[j]][k]*dest[k][i]
-# #             dest[j][i] /= src[index[j]][j]
-# #     return dest
-# 
-# def gaussian(a,index):
-#     c = [0.0,0.0,0.0,0.0]
-#     for i in range(0, 4):
-#         index[i] = i
-#         c[i] = 0
-# 
-#     for i in range(0, 4):
-#         c1 = 0
-#         for j in range(0, 4):
-#             if (a[i][j] < 0):
-#                 c0 = a[i][j]*-1.0
-#             else:
-#                 c0 = a[i][j]
-#             if (c0 > c1):
-#                 c1 = c0
-#         c[i] = c1
-#     k = 0
-#     for j in range(0, 3):
-#         pi1 = 0
-#         for i in range(j, 4):
-#             if(a[index[i]][j] < 0):
-#                 pi0 = a[index[i]][j]*-1.0
-#             else:
-#                 pi0 = a[index[i]][j]
-#             pi0 /= c[index[i]]
-#             if (pi0 > pi1):
-#                 pi1 = pi0
-#                 k = i
-#         itmp = index[j]
-#         index[j] = index[k]
-#         index[k] = itmp
-#         for i in range(j+1, 4):
-#             pj = a[index[i]][j]/a[index[j]][j]
-#             a[index[i]][j] = pj
-#             for l in range(j+1, 4):
-#                 a[index[i]][l] -= pj*a[index[j]][l]
-#                 
-def inv(M):
-    """
-    return the inv of the matrix M
-    """
-    #clone the matrix and append the identity matrix
-    # [int(i==j) for j in range_M] is nothing but the i(th row of the identity matrix
-    m2 = [row[:]+[int(i==j) for j in range(len(M) )] for i,row in enumerate(M) ]
-    # extract the appended matrix (kind of m2[m:,...]
-    return [row[len(M[0]):] for row in m2] if gauss_jordan(m2) else None
-  
-def gauss_jordan(m, eps = 1.0/(10**10)):
-    """Puts given matrix (2D array) into the Reduced Row Echelon Form.
-       Returns True if successful, False if 'm' is singular.
-       NOTE: make sure all the matrix items support fractions! Int matrix will NOT work!
-       Written by Jarno Elonen in April 2005, released into Public Domain"""
-    (h, w) = (len(m), len(m[0]))
-    for y in range(0,h):
-        maxrow = y
-        for y2 in range(y+1, h):    # Find max pivot
-            if abs(m[y2][y]) > abs(m[maxrow][y]):
-                maxrow = y2
-        (m[y], m[maxrow]) = (m[maxrow], m[y])
-        if abs(m[y][y]) <= eps:     # Singular?
-            return False
-        for y2 in range(y+1, h):    # Eliminate column y
-            c = m[y2][y] / m[y][y]
-            for x in range(y, w):
-                m[y2][x] -= m[y][x] * c
-    for y in range(h-1, 0-1, -1): # Backsubstitute
-        c  = m[y][y]
-        for y2 in range(0,y):
-            for x in range(w-1, y-1, -1):
-                m[y2][x] -=  m[y][x] * m[y2][y] / c
-        m[y][y] /= c
-        for x in range(h, w):       # Normalize row y
-            m[y][x] /= c
-    return True
+def getVector(v1,v2):
+    dest = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]
+    return dest
 
-def rot(x,y,z,a,b,c,u,v,w,t):
-    t = (t*math.pi)/180.0
-    vet = [0.0,0.0,0.0]
-    vet[0] = (a*(v*v+w*w) - u*(b*v + c*w - u*x - v*y - w*z))*(1-math.cos(t))+x*math.cos(t)+(-c*v+b*w-w*y+v*z)*math.sin(t)
-    vet[1] = (b*(u*u+w*w) - v*(a*u + c*w - u*x - v*y - w*z))*(1-math.cos(t))+y*math.cos(t)+(c*u-a*w+w*x-u*z)*math.sin(t)
-    vet[2] = (c*(u*u+v*v) - w*(a*u + b*v - u*x - v*y - w*z))*(1-math.cos(t))+z*math.cos(t)+(-b*u+a*v-v*x+u*y)*math.sin(t)
-    return vet
-    
+def dotProduct(v1,v2):
+    return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]
+
 def crossProduct(src1, src2):
     dest = [0.0,0.0,0.0]
     dest[0] = (src1[1]*src2[2])-(src2[1]*src1[2])
     dest[1] = (src1[2]*src2[0])-(src2[2]*src1[0])
     dest[2] = (src1[0]*src2[1])-(src2[0]*src1[1])
     return dest
+
+def getAngle(vec1, vec2):
+    dot = dotProduct(vec1, vec2)
+    n1 = normVector(vec1)
+    n2 = normVector(vec2)
+    cosA = dot/(n1*n2)
+    if cosA > 1.0:
+        cosA = 1.0
+    if cosA < -1.0:
+        cosA = -1.0
+    angle = math.acos(cosA)
+    return abs(geo.radiansToDegree(angle))
+
+def getAngleUns(vec1, vec2):
+    dot = dotProduct(vec1, vec2)
+    n1 = normVector(vec1)
+    n2 = normVector(vec2)
+    cosA = dot/(n1*n2)
+    if cosA > 1.0:
+        cosA = 1.0
+    if cosA < -1.0:
+        cosA = -1.0
+    angle = math.acos(cosA)
+    return geo.radiansToDegree(angle)

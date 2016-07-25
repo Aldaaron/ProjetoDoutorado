@@ -116,11 +116,12 @@ def createSurfaceCurve2(curves):
     return surfID
     
 def createVolume(surfs):
+    volID = cubit.get_owning_volume("surface", surfs[-1])
     ss = ""
     for s in surfs:
         ss += str(s) + " "
     cubit.cmd("create volume surface %s noheal" % (ss))
-    volID = cubit.get_last_id("volume")
+    #volID = cubit.get_last_id("volume")
     return volID
 
 def createVolumeFromAllSurfaces():
@@ -161,11 +162,6 @@ def unionAll():
 def unionVolumes(v1, v2):
     cubit.cmd("unite volume %d %d"% (v1, v2))
     return v1
-
-def createEllipseFull(v1,v2,v3):
-    cubit.cmd("create curve vertex %d %d %d  ellipse first angle 0 last angle 360" % (v1,v2,v3))
-    ellipseID = cubit.get_last_id("curve")
-    return ellipseID
 
 def stepUnion(vols):
     volID = vols[0]

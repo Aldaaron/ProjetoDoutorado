@@ -94,8 +94,8 @@ class Arvore(object):
             ip = self.points[atual.initialPoint]
             fp = self.points[atual.finalPoint]
             lenght = geo.distance(ip, fp)
-            if lenght < atual.radius*3.5:
-                t=(atual.radius*4)/lenght
+            if lenght < atual.radius*4:
+                t=(atual.radius*4.5)/lenght
                 npf = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
                 #self.points[atual.finalPoint] = npf
                 xyz = [npf[0]-fp[0], npf[1]-fp[1], npf[2]-fp[2]]
@@ -339,7 +339,11 @@ class Arvore(object):
                 v3 = geo.createVertex(f1f[0], f1f[1], f1f[2])
                 spAux = geo.createSpline(v1, v2, v3)
                 sp = geo.splitCurve(spAux, v2)
-                newV = geo.createVertexOnCurveFraction(sp, 0.5)
+                newV = geo.createVertexOnCurveFraction(sp, 0.66)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon1, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.33)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
@@ -358,7 +362,11 @@ class Arvore(object):
                 v3 = geo.createVertex(f2f[0], f2f[1], f2f[2])
                 spAux = geo.createSpline(v1, v2, v3)
                 sp = geo.splitCurve(spAux, v2)
-                newV = geo.createVertexOnCurveFraction(sp, 0.5)
+                newV = geo.createVertexOnCurveFraction(sp, 0.66)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon2, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.33)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
@@ -420,7 +428,7 @@ class Arvore(object):
         count = 0
         while not (len(heap) == 0):
             count += 1
-            if count < 1000:
+            if count < 2:
                 atual = heap.pop()
             else:
                 break
@@ -534,14 +542,20 @@ class Arvore(object):
                     if atual.son1 is not None:
                         #atual.son1.arcsi = arcsf
                         heap.append(atual.son1)
-        self.genSurfaces() 
-        self.genVolumes()
+        #self.genSurfaces() 
+        #self.genVolumes()
 
     def genVolumes(self):
         heap = [self.root]
         while not (len(heap) == 0):
             atual = heap.pop()
             atual.tube.genVolume()
+            if atual == self.root:
+                self.vol = atual.tube.vol
+            else:
+                geo.imprintVolumes(self.vol, atual.tube.vol)
+                geo.mergeVolumes(self.vol, atual.tube.vol)
+                self.vol = geo.unionVolumes(self.vol, atual.tube.vol)
             if atual.son1 is not None:
                 heap.append(atual.son1)
             if atual.son2 is not None:
@@ -549,7 +563,7 @@ class Arvore(object):
 #         geo.imprintMergeAll() 
 #         geo.unionAll()
 #         cubit.cmd('Color Define "%s" RGB %f %f %f' % ("darkred", 0.75,0,0))
-#         geo.colorVolume2('user "darkred"')
+#         geo.colorVolume(self.vol,'user "darkred"')
     
     def genSurfaces(self):
         heap = [self.root]

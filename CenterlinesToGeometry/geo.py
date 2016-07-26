@@ -28,6 +28,11 @@ def splitCurve(c,v):
     splineID = cubit.get_last_id("curve")
     return splineID
 
+def splitCurve2(c,v1, v2):
+    cubit.cmd("split curve %d at vertex %d %d" % (c,v1,v2))
+    splineID = cubit.get_last_id("curve")
+    return splineID
+
 def createSpline2(pts):
     points = ""
     for p in pts:
@@ -120,7 +125,7 @@ def createVolume(surfs):
     ss = ""
     for s in surfs:
         ss += str(s) + " "
-    cubit.cmd("create volume surface %s noheal" % (ss))
+    cubit.cmd("create volume surface %s" % (ss))
     #volID = cubit.get_last_id("volume")
     return volID
 

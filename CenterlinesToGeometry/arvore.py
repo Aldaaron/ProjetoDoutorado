@@ -94,8 +94,8 @@ class Arvore(object):
             ip = self.points[atual.initialPoint]
             fp = self.points[atual.finalPoint]
             lenght = geo.distance(ip, fp)
-            if lenght < atual.radius*4:
-                t=(atual.radius*4.5)/lenght
+            if lenght < atual.radius*5:
+                t=(atual.radius*6)/lenght
                 npf = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
                 #self.points[atual.finalPoint] = npf
                 xyz = [npf[0]-fp[0], npf[1]-fp[1], npf[2]-fp[2]]
@@ -330,20 +330,28 @@ class Arvore(object):
                 r1f = self.points[atual.son1.finalPoint]
                 f1i = self.points[rSon1.initialPoint]
                 f1f = self.points[rSon1.finalPoint]
-                t = 0.9
-                ref = [(1-t)*f1i[0]+t*f1f[0],((1-t)*f1i[1]+t*f1f[1]),((1-t)*f1i[2]+t*f1f[2])]
-                self.splitBranch(rSon1, ref)
-                f1f = self.points[rSon1.finalPoint]
+#                 t = 0.9
+#                 ref = [(1-t)*f1i[0]+t*f1f[0],((1-t)*f1i[1]+t*f1f[1]),((1-t)*f1i[2]+t*f1f[2])]
+#                 self.splitBranch(rSon1, ref)
+#                 f1f = self.points[rSon1.finalPoint]
                 v1 = geo.createVertex(r1i[0], r1i[1], r1i[2])
                 v2 = geo.createVertex(f1i[0], f1i[1], f1i[2])
                 v3 = geo.createVertex(f1f[0], f1f[1], f1f[2])
                 spAux = geo.createSpline(v1, v2, v3)
                 sp = geo.splitCurve(spAux, v2)
-                newV = geo.createVertexOnCurveFraction(sp, 0.66)
+                newV = geo.createVertexOnCurveFraction(sp, 0.8)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
-                newV = geo.createVertexOnCurveFraction(sp, 0.33)
+                newV = geo.createVertexOnCurveFraction(sp, 0.6)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon1, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.4)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon1, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.2)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
@@ -353,20 +361,28 @@ class Arvore(object):
                 r2f = self.points[atual.son2.finalPoint]
                 f2i = self.points[rSon2.initialPoint]
                 f2f = self.points[rSon2.finalPoint]
-                t = 0.9
-                ref = [(1-t)*f2i[0]+t*f2f[0],((1-t)*f2i[1]+t*f2f[1]),((1-t)*f2i[2]+t*f2f[2])]
-                self.splitBranch(rSon2, ref)
-                f2f = self.points[rSon2.finalPoint]
+#                 t = 0.9
+#                 ref = [(1-t)*f2i[0]+t*f2f[0],((1-t)*f2i[1]+t*f2f[1]),((1-t)*f2i[2]+t*f2f[2])]
+#                 self.splitBranch(rSon2, ref)
+#                 f2f = self.points[rSon2.finalPoint]
                 v1 = geo.createVertex(r2i[0], r2i[1], r2i[2])
                 v2 = geo.createVertex(f2i[0], f2i[1], f2i[2])
                 v3 = geo.createVertex(f2f[0], f2f[1], f2f[2])
                 spAux = geo.createSpline(v1, v2, v3)
                 sp = geo.splitCurve(spAux, v2)
-                newV = geo.createVertexOnCurveFraction(sp, 0.66)
+                newV = geo.createVertexOnCurveFraction(sp, 0.8)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
-                newV = geo.createVertexOnCurveFraction(sp, 0.33)
+                newV = geo.createVertexOnCurveFraction(sp, 0.6)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon2, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.4)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon2, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.2)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
@@ -410,7 +426,50 @@ class Arvore(object):
             if atual.son2 is not None:
                 heap.append(atual.son2) 
         linesFile.close()
-        
+    
+    def makeGeometry2(self):
+        for p in self.points:
+            geo.createVertex(p[0],p[1],p[2])
+        heap = [self.root]
+        while not (len(heap) == 0):
+            atual = heap.pop()
+            lineID = geo.createLine(atual.initialPoint+1, atual.finalPoint+1)
+            atual.index = lineID
+            if atual.son1 is not None:
+                heap.append(atual.son1)
+            if atual.son2 is not None:
+                heap.append(atual.son2) 
+        heap = [self.root]
+        count = 0
+        while not (len(heap) == 0):
+            count += 1
+            if count < 10000:
+                atual = heap.pop()
+            else:
+                break
+            if atual.root is None:
+                circleI = geo.createCircleNormal(atual.initialPoint+1, atual.radius, atual.index)
+            else:
+                circleI = atual.root.link
+            circleF = geo.createCircleNormal(atual.finalPoint+1, atual.radius, atual.index)
+            atual.tube = Tube([circleI], [circleF])
+            if atual.son1 is not None and atual.son2 is not None:
+                self.genSons2(atual)
+                if atual.son1.son1 is not None:
+                    heap.append(atual.son1.son1)
+                if atual.son1.son2 is not None:
+                    heap.append(atual.son1.son2) 
+                if atual.son2.son1 is not None:
+                    heap.append(atual.son2.son1)
+                if atual.son2.son2 is not None:
+                    heap.append(atual.son2.son2)
+            else:
+                if atual.son1 is not None:
+                    atual.link = circleF
+                    heap.append(atual.son1)
+        self.genSurfaces()
+        self.genVolumes()
+                
     def makeGeometry(self):
         for p in self.points:
             geo.createVertex(p[0],p[1],p[2])
@@ -428,7 +487,7 @@ class Arvore(object):
         count = 0
         while not (len(heap) == 0):
             count += 1
-            if count < 2:
+            if count < 10000:
                 atual = heap.pop()
             else:
                 break
@@ -482,7 +541,7 @@ class Arvore(object):
                     u = geo2.getVector4_3(u)
                     geo2.normalizeVector(u)
                     arcsi = []
-                    for i in range(0, 4):
+                    for i in range(0, 2):
                         arcsi.append([atual.root.tube.finalVertexs[i], atual.root.tube.finalArcs[i]])
                     t=(lenght-atual.radius)/lenght
                     ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
@@ -532,7 +591,7 @@ class Arvore(object):
                         u = geo2.getVector4_3(u)
                         geo2.normalizeVector(u)
                     arcsi = []
-                    for i in range(0, 4):
+                    for i in range(0, 2):
                         arcsi.append([atual.root.tube.finalVertexs[i], atual.root.tube.finalArcs[i]])
                     t=(lenght-atual.radius)/lenght
                     ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
@@ -547,41 +606,59 @@ class Arvore(object):
 
     def genVolumes(self):
         heap = [self.root]
+        count = 0
+        #self.root.tube.genSurfacesI()
         while not (len(heap) == 0):
-            atual = heap.pop()
-            atual.tube.genVolume()
-            if atual == self.root:
-                self.vol = atual.tube.vol
+            count += 1
+            if count < 1500:   
+                atual = heap.pop()
             else:
-                geo.imprintVolumes(self.vol, atual.tube.vol)
-                geo.mergeVolumes(self.vol, atual.tube.vol)
-                self.vol = geo.unionVolumes(self.vol, atual.tube.vol)
+                break
+            if atual.tube is not None:
+                atual.tube.genVolume()
+                if atual == self.root:
+                    self.vol = atual.tube.vol
+                else:
+#                     geo.imprintVolumes(self.vol, atual.tube.vol)
+#                     geo.mergeVolumes(self.vol, atual.tube.vol)
+                    self.vol = geo.unionVolumes(self.vol, atual.tube.vol)
             if atual.son1 is not None:
                 heap.append(atual.son1)
             if atual.son2 is not None:
                 heap.append(atual.son2) 
 #         geo.imprintMergeAll() 
 #         geo.unionAll()
-#         cubit.cmd('Color Define "%s" RGB %f %f %f' % ("darkred", 0.75,0,0))
-#         geo.colorVolume(self.vol,'user "darkred"')
+        cubit.cmd('Color Define "%s" RGB %f %f %f' % ("darkred", 0.75,0,0))
+        geo.colorVolume(self.vol,'user "darkred"')
+
+    def genVolumes2(self):
+        #geo.imprintMergeAll()
+        geo.createVolumeFromAllSurfaces()
     
     def genSurfaces(self):
         heap = [self.root]
         count = 0
+        #self.root.tube.genSurfacesI()
         while not (len(heap) == 0):
             count += 1
-            atual = heap.pop()
-            print atual.initialPoint+1
+            if count < 1000:
+                atual = heap.pop()
             #if atual.son1 is not None:
-            atual.tube.genSurfaces()
+            else:
+                break
+            if atual.tube is not None:
+                atual.tube.genSurfaces()
+#             if count == 3:
+#                 atual.tube.genSurfacesF()
+#             if atual.son1 is None and atual.son2 is None:
+#                 atual.tube.genSurfacesF()
             if atual.son1 is not None:
                 heap.append(atual.son1)
             if atual.son2 is not None:
                 heap.append(atual.son2) 
     
-    def genSons(self, atual, arcsi,v1,v2,u2):
-        eli1 = geo.createEllipse(arcsi[3][0],v1,atual.finalPoint+1)
-        eli2 = geo.createEllipse(arcsi[1][0],v1,atual.finalPoint+1)
+    def genSons(self, atual, arcsi,u2):
+        eli = geo.createLine(arcsi[0][0],arcsi[1][0])
         ip = self.points[atual.son1.initialPoint]
         fp = self.points[atual.son1.finalPoint]
         fps = self.points[atual.son1.son1.finalPoint]
@@ -594,10 +671,8 @@ class Arvore(object):
         u = geo2.getVector4_3(u)
         geo2.normalizeVector(u)
         arcsf1 = self.genArc2(atual.son1, atual.son1.finalPoint+1,ref,u2,atual.son1.radius,1)
-        atual.son1.tube = Tube([[arcsi[3][0],eli1],[v1,eli2],arcsi[1],arcsi[2]], arcsf1, atual.son1.initialPoint+1, atual.son1.finalPoint+1)
-         
-        eli3 = geo.createEllipse(arcsi[3][0],v2,atual.finalPoint+1)
-        eli4 = geo.createEllipse(arcsi[1][0],v2,atual.finalPoint+1)
+        atual.son1.tube = Tube([[arcsi[1][0],eli],arcsi[0]], arcsf1, atual.initialPoint+1, atual.finalPoint+1)
+       
         ip = self.points[atual.son2.initialPoint]
         fp = self.points[atual.son2.finalPoint]
         fps = self.points[atual.son2.son1.finalPoint]
@@ -610,8 +685,53 @@ class Arvore(object):
         u = geo2.getVector4_3(u)
         geo2.normalizeVector(u)
         arcsf2 = self.genArc2(atual.son2, atual.son2.finalPoint+1,ref,u2,atual.son2.radius,2)
-        atual.son2.tube = Tube([[arcsi[1][0],eli3],[v2,eli4],arcsi[3],arcsi[0]], arcsf2, atual.son2.initialPoint+1, atual.son2.finalPoint+1)
-
+        atual.son2.tube = Tube([[arcsi[0][0],eli],arcsi[1]], arcsf2, atual.initialPoint+1, atual.finalPoint+1)
+#         atual.son2.tube = Tube([[arcsi[1][0],eli3],[v2,eli4],arcsi[3],arcsi[0]], arcsf2, atual.son2.initialPoint+1, atual.son2.finalPoint+1)
+#        atual.son2.tube = Tube([[arcsi[1][0],eli3],[atual.finalPoint+1,eli4],arcsi[3],arcsi[0]], arcsf2, atual.initialPoint+1, atual.finalPoint+1)
+    
+    def genSons2(self, branch):
+        ipr = self.points[branch.initialPoint]
+        fpr = self.points[branch.finalPoint]
+        fp = self.points[branch.son1.finalPoint]
+        lenght = geo.distance(ipr, fpr)
+        t=(lenght-branch.radius)/lenght
+        ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
+        u0 = [fpr[0]-ref[0],fpr[1]-ref[1],fpr[2]-ref[2]]
+        u1 = [ref[0]-fp[0],ref[1]-fp[1],ref[2]-fp[2]]
+        u = geo2.crossProduct(u0, u1)
+        u = geo2.getVector4_3(u)
+        geo2.normalizeVector(u)
+        coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(fpr), u, -90)
+        vAux1 = geo.createVertex(coords[0],coords[1],coords[2])
+        circleAux = geo.createCircleNormal2(branch.finalPoint+1,vAux1,vAux1,branch.radius,branch.index)
+        v1 = geo.createVertexOnCurveFraction(circleAux, 0.25)
+        v2 = geo.createVertexOnCurveFraction(circleAux, 0.75)
+        geo.deleteCurve(circleAux)
+        arc1 = geo.createCircleNormal2(branch.finalPoint+1, v1, v2, branch.radius, branch.index)
+        arc2 = geo.createCircleNormal2(branch.finalPoint+1, v2, v1, branch.radius, branch.index)
+        l1 = geo.createLine(v1, v2)
+        l2 = geo.createLine(v1, v2)
+        
+        ip = self.points[branch.son1.initialPoint]
+        fp = self.points[branch.son1.finalPoint]
+        fps = self.points[branch.son1.son1.finalPoint]
+        lenght = geo.distance(ip, fp)
+        t=(lenght-branch.son1.radius)/lenght
+        ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
+        arcsf1 = self.genArc2(branch.son1, branch.son1.finalPoint+1,ref,u,branch.son1.radius,1)
+        branch.son1.tube = Tube([arc1,l1], arcsf1)
+        branch.son1.link = arcsf1[2]
+        
+        ip = self.points[branch.son2.initialPoint]
+        fp = self.points[branch.son2.finalPoint]
+        fps = self.points[branch.son2.son1.finalPoint]
+        lenght = geo.distance(ip, fp)
+        t=(lenght-branch.son2.radius)/lenght
+        ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
+        arcsf2 = self.genArc2(branch.son2, branch.son2.finalPoint+1,ref,u,branch.son2.radius,2)
+        branch.son2.tube = Tube([arc2,l2], arcsf2)
+        branch.son2.link = arcsf2[2]
+                
     def getAngle(self, son):
         initialRoot = self.points[son.root.initialPoint]
         finalRoot = self.points[son.root.finalPoint]
@@ -711,19 +831,20 @@ class Arvore(object):
         vAuxI1 = geo.createVertex(coords[0],coords[1],coords[2])
         circleI = geo.createCircleNormal2(point,vAuxI1,vAuxI1,radius,branch.index)
         vAuxI2 = geo.createVertexOnCurveFraction(circleI, 0.25)
-        arc = geo.createCircleNormal2(point, vAuxI1, vAuxI2, radius, branch.index)
-        arcI1 = [vAuxI1, arc]
         vAuxI3 = geo.createVertexOnCurveFraction(circleI, 0.5)
-        arc = geo.createCircleNormal2(point, vAuxI2, vAuxI3, radius, branch.index)
-        arcI2 = [vAuxI2, arc]
         vAuxI4 = geo.createVertexOnCurveFraction(circleI, 0.75)
-        arc = geo.createCircleNormal2(point, vAuxI3, vAuxI4, radius, branch.index)
-        arcI3 = [vAuxI3, arc]
-        arc = geo.createCircleNormal2(point, vAuxI4, vAuxI1, radius, branch.index)
+        #arc = geo.createCircleNormal2(point, vAuxI1, vAuxI2, radius, branch.index)
+        #arcI1 = [vAuxI1, arc]
+        arc = geo.createCircleNormal2(point, vAuxI2, vAuxI4, radius, branch.index)
+        arcI2 = [vAuxI2, arc]
+        #arc = geo.createCircleNormal2(point, vAuxI3, vAuxI4, radius, branch.index)
+        #arcI3 = [vAuxI3, arc]
+        arc = geo.createCircleNormal2(point, vAuxI4, vAuxI2, radius, branch.index)
         arcI4 = [vAuxI4, arc]
         geo.deleteCurve2(circleI)
 
-        arcs = [arcI1,arcI2,arcI3,arcI4]
+        #arcs = [arcI1,arcI2,arcI3,arcI4]
+        arcs = [arcI2,arcI4]
         return arcs
     
     def genArc2(self, branch, point, ref, u, radius, son):
@@ -734,14 +855,13 @@ class Arvore(object):
             off = 40
         else:
             off = -40
+        off = 0
          
         t=(lenght-branch.radius*0.6)/lenght
         ref2 = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
         ipr = self.points[point-1]
         coords = geo2.rotateByAxis(geo2.getVector4_3(ref2), geo2.getVector4_3(ipr), u, -90+off)
         vAux1 = geo.createVertex(coords[0],coords[1],coords[2])
-#         coords = geo2.rotateByAxis(geo2.getVector4_3(ref2), geo2.getVector4_3(ipr), u, 90+off)
-#         v2 = geo.createVertex(coords[0],coords[1],coords[2])
             
         ipr = self.points[point-1]
         coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(ipr), u, -90+off)
@@ -749,46 +869,18 @@ class Arvore(object):
         circleI = geo.createCircleNormal2(point,vAux2,vAux2,radius,branch.root.index)
         
         vAux3 = geo.createVertexOnCurveFraction(circleI, 0.25)
+        eliFullAux = geo.createEllipseFull(vAux3, vAux1, point)
         eliFull = geo.createEllipseFull(vAux3, vAux1, point)
         
         geo.deleteCurve2(circleI)
         geo.deleteVertex(vAux1)
         geo.deleteVertex(vAux2)
         
-        v1 = vAux3
-        v2 = geo.createVertexOnCurveFraction(eliFull, 0.25)
-        arc = geo.createEllipse(v1,v2,point)
-        arcI1 = [v1, arc]
-        v3 = geo.createVertexOnCurveFraction(eliFull, 0.5)
-        arc = geo.createEllipse(v3,v2,point)
-        arcI2 = [v2, arc]
-        v4 = geo.createVertexOnCurveFraction(eliFull, 0.75)
-        arc = geo.createEllipse(v3,v4,point)
-        arcI3 = [v3, arc]
-        arc = geo.createEllipse(v1,v4,point)
-        arcI4 = [v4, arc]
-        
-
-#         arc = geo.createEllipse(vAuxI2,v1,point)
-#         arcI1 = [v1, arc]
-#         
-#         v2 = geo.createVertexOnCurveFraction(eliFull, 0.5)
-#         arc = geo.createEllipse(vAuxI2,v2,point)
-#         arcI2 = [vAuxI2, arc]
-#         
-#         vAuxI4 = geo.createVertexOnCurveFraction(circleI, 0.75)
-#         arc = geo.createEllipse(vAuxI4,v2,point)
-#         arcI3 = [v2, arc]
-#         
-#         arc = geo.createEllipse(vAuxI4,v1,point)
-#         arcI4 = [vAuxI4, arc]
-#         
-#         geo.deleteCurve2(circleI)
-#         geo.deleteCurve2(eliFull)
-#         geo.deleteVertex(vAuxI1)
-# 
-        geo.deleteCurve2(eliFull)
-        arcs = [arcI1,arcI2,arcI3,arcI4]
+        v1 = geo.createVertexOnCurveFraction(eliFullAux, 0)
+        v2 = geo.createVertexOnCurveFraction(eliFullAux, 0.5)
+        eli1 = geo.splitCurve2(eliFullAux, v1, v2)
+        eli2 = eli1-1
+        arcs = [eli1,eli2,eliFull]
         return arcs
 
     def splitBranch(self,branch, point):

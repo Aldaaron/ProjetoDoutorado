@@ -32,7 +32,7 @@ def main():
 #    arvore.smoth()
 #    arvore.smoth2()
 #    arvore.save2()
-    arvore.makeGeometry()
+    arvore.makeGeometry2()
 #    arvore.check()
     fp.close()
     fl.close()

@@ -14,4 +14,5 @@ class Branch(object):
         self.son1 = None
         self.son2 = None
         self.root = None
+        self.tube = None
     

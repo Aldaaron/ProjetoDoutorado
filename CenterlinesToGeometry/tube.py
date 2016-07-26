@@ -10,42 +10,56 @@ def eprint(*args, **kwargs):
 
 class Tube(object):
 
-    def __init__(self, initialArcs, finalArcs, v1, v2):
+#     def __init__(self, initialArcs, finalArcs, v1, v2):
+#         self.initialArcs = []
+#         self.finalArcs = []
+#         self.lines = []
+#         self.surfs = []
+#         self.initialVertexs = []
+#         self.finalVertexs = []
+# 
+#         self.initialVertexs = [initialArcs[0][0],initialArcs[1][0]]
+#         self.finalVertexs = [0,0]
+#         iList = [initialArcs[0][0],initialArcs[1][0]]
+#         fList = [finalArcs[0][0],finalArcs[1][0]]
+#         self.alignPoints2(0,iList,fList, v1,v2, None)
+#         self.checkPoints()
+#         for i in range(0, len(self.initialVertexs)):
+#             self.lines.append(geo.createLine(self.initialVertexs[i], self.finalVertexs[i]))  
+#         self.alignCurves2(initialArcs,finalArcs) 
+        
+    def __init__(self, arcsI, arcsF):
         self.initialArcs = []
         self.finalArcs = []
-        self.lines = []
         self.surfs = []
-        self.initialVertexs = []
-        self.finalVertexs = []
-
-        self.initialVertexs = [initialArcs[0][0],initialArcs[1][0],initialArcs[2][0],initialArcs[3][0]]
-        self.finalVertexs = [0,0,0,0]
-        iList = [initialArcs[0][0],initialArcs[1][0],initialArcs[2][0],initialArcs[3][0]]
-        fList = [finalArcs[0][0],finalArcs[1][0],finalArcs[2][0],finalArcs[3][0]]
-        self.alignPoints2(0,iList,fList, v1,v2, None)
-        self.checkPoints()
-        for i in range(0, len(self.initialVertexs)):
-            self.lines.append(geo.createLine(self.initialVertexs[i], self.finalVertexs[i]))  
-        self.alignCurves(initialArcs,finalArcs)
-        
-#         if len(self.initialArcs) < 4:
-#             eprint("Faltam arcos iniciais: " + str(self.initialArcs) + str(initialArcs))
-#         if len(self.finalArcs) < 4:
-#             eprint("Faltam arcos finais: " + str(self.finalArcs)+ str(finalArcs))
-#         if len(self.lines) < 4:
-#             eprint("Faltam linhas: " + str(self.lines))
-
+        if len(arcsI) == 1:
+            self.initialArcs.append(arcsI[0])
+            self.finalArcs.append(arcsF[0])
+        else:
+            self.alignCurves2(arcsI, arcsF)
+            
     def checkPoints(self):
         if len(self.finalVertexs) != len(set(self.finalVertexs)):
             eprint("Erro")
             eprint(self.finalVertexs)
+            
     def genSurfaces(self):
-        for i in range(0, len(self.initialArcs)-1):
-            cvs = [self.initialArcs[i],self.finalArcs[i], self.lines[i],self.lines[i+1]]
-            self.surfs.append(geo.createSurfaceCurve2(cvs))
-        cvs = [self.initialArcs[-1],self.finalArcs[-1], self.lines[-1],self.lines[0]]
-        self.surfs.append(geo.createSurfaceCurve2(cvs))
+#         for i in range(0, len(self.initialArcs)-1):
+#             cvs = [self.initialArcs[i],self.finalArcs[i], self.lines[i],self.lines[i+1]]
+#             self.surfs.append(geo.createSurfaceCurve2(cvs))
+#         cvs = [self.initialArcs[-1],self.finalArcs[-1], self.lines[-1],self.lines[0]]
+#         self.surfs.append(geo.createSurfaceCurve2(cvs))
+#         self.surfs.append(geo.createSurfaceCurve2(self.initialArcs))
+#         self.surfs.append(geo.createSurfaceCurve2(self.finalArcs))
+        for i in range(0, len(self.initialArcs)):
+            self.surfs.append(geo.createSkinCurve(self.initialArcs[i], self.finalArcs[i]))
         self.surfs.append(geo.createSurfaceCurve2(self.initialArcs))
+        self.surfs.append(geo.createSurfaceCurve2(self.finalArcs))
+
+    def genSurfacesI(self):
+        self.surfs.append(geo.createSurfaceCurve2(self.initialArcs))
+        
+    def genSurfacesF(self):
         self.surfs.append(geo.createSurfaceCurve2(self.finalArcs))
         
     def alignPoints(self,initialArcs,finalArcs, v1, v2):
@@ -75,7 +89,7 @@ class Tube(object):
             fList.remove(ele)
             if add is not None:
                 fList.append(add)
-            if i < 3:
+            if i < 1:
                 self.alignPoints2(i+1, iList, fList, v1, v2, None)
         else:
             angles = []
@@ -86,7 +100,7 @@ class Tube(object):
                 fList.remove(ele)
                 if add is not None:
                     fList.append(add)
-                if i < 3:
+                if i < 1:
                     self.alignPoints2(i+1, iList, fList, v1, v2, None)
             else:
                 fList.remove(ele)
@@ -156,12 +170,33 @@ class Tube(object):
                 self.finalArcs.append(arc)
                 break
             
+    def alignCurves2(self,initialArcs,finalArcs):
+        self.initialArcs.append(initialArcs[0])
+        self.initialArcs.append(initialArcs[1])
+        mid1i = geo.createVertexOnCurveFraction(initialArcs[0],0.5)
+        mid2i = geo.createVertexOnCurveFraction(initialArcs[1],0.5)
+        mid1f = geo.createVertexOnCurveFraction(finalArcs[0],0.5)
+        mid2f = geo.createVertexOnCurveFraction(finalArcs[1],0.5)
+        d1 = cubit.get_distance_between(mid1i, mid1f)
+        d2 = cubit.get_distance_between(mid1i, mid2f)
+        if d1 < d2:
+            self.finalArcs.append(finalArcs[0])
+            self.finalArcs.append(finalArcs[1])
+        else:
+            self.finalArcs.append(finalArcs[1])
+            self.finalArcs.append(finalArcs[0])
+        geo.deleteVertex(mid1i)
+        geo.deleteVertex(mid2i)
+        geo.deleteVertex(mid1f)
+        geo.deleteVertex(mid2f)
+            
+            
     def genVolume(self):
-        bodies = []
-        for s in self.surfs:
-            bodies.append(cubit.get_owning_body("surface", s))
-        geo.imprintBody(bodies) 
-        geo.mergeBody(bodies) 
+#         bodies = []
+#         for s in self.surfs:
+#             bodies.append(cubit.get_owning_body("surface", s))
+#         geo.imprintBody(bodies) 
+#         geo.mergeBody(bodies) 
         self.vol = geo.createVolume(self.surfs)
     
     def getAngle(self, v1, v2, v3, v4):

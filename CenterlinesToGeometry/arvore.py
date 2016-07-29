@@ -39,6 +39,37 @@ class Arvore(object):
                         heap.append(son)
         self.sort()
         self.vol = None
+    
+    def smothRadius(self):
+        heap = [self.root]
+        while not (len(heap) == 0):
+            atual = heap.pop()
+            if atual.son1 is not None and atual.son2 is not None:
+                atual.son1.son1.nSplit = 1
+                atual.son2.son1.nSplit = 1
+                atual.son1.son1.rootRadius = atual.radius
+                atual.son2.son1.rootRadius = atual.radius
+                fpr = self.points[atual.finalPoint]
+                fp = self.points[atual.son1.finalPoint]
+                fp2 = self.points[atual.son2.finalPoint]
+                u_0 = [fp[0]-fpr[0],fp[1]-fpr[1],fp[2]-fpr[2]]
+                u_1 = [fp2[0]-fpr[0],fp2[1]-fpr[1],fp2[2]-fpr[2]]
+                u = geo2.crossProduct(u_0, u_1)
+                u = geo2.getVector4_3(u)
+                geo2.normalizeVector(u)
+                atual.son1.son1.u = u
+                atual.son2.son1.u = u
+                
+                if atual.son1.son1 is not None:
+                    heap.append(atual.son1.son1)
+                if atual.son2.son1 is not None:
+                    heap.append(atual.son2.son1)
+            else:
+                if atual.son1 is not None:
+                    atual.son1.nSplit =  atual.nSplit + 1
+                    atual.son1.rootRadius = atual.rootRadius
+                    atual.son1.u = atual.u
+                    heap.append(atual.son1)
                 
     def draw(self):
         for p in self.points:
@@ -339,7 +370,11 @@ class Arvore(object):
                 v3 = geo.createVertex(f1f[0], f1f[1], f1f[2])
                 spAux = geo.createSpline(v1, v2, v3)
                 sp = geo.splitCurve(spAux, v2)
-                newV = geo.createVertexOnCurveFraction(sp, 0.8)
+                newV = geo.createVertexOnCurveFraction(sp, 0.9)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon1, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.75)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
@@ -347,11 +382,15 @@ class Arvore(object):
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
-                newV = geo.createVertexOnCurveFraction(sp, 0.4)
+                newV = geo.createVertexOnCurveFraction(sp, 0.45)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
-                newV = geo.createVertexOnCurveFraction(sp, 0.2)
+                newV = geo.createVertexOnCurveFraction(sp, 0.3)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon1, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.15)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
@@ -370,7 +409,11 @@ class Arvore(object):
                 v3 = geo.createVertex(f2f[0], f2f[1], f2f[2])
                 spAux = geo.createSpline(v1, v2, v3)
                 sp = geo.splitCurve(spAux, v2)
-                newV = geo.createVertexOnCurveFraction(sp, 0.8)
+                newV = geo.createVertexOnCurveFraction(sp, 0.9)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon2, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.75)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
@@ -378,11 +421,15 @@ class Arvore(object):
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
-                newV = geo.createVertexOnCurveFraction(sp, 0.4)
+                newV = geo.createVertexOnCurveFraction(sp, 0.45)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
-                newV = geo.createVertexOnCurveFraction(sp, 0.2)
+                newV = geo.createVertexOnCurveFraction(sp, 0.3)
+                newPoint = cubit.vertex(newV).coordinates()
+                self.points.append(newPoint)
+                self.splitBranch(rSon2, newPoint)
+                newV = geo.createVertexOnCurveFraction(sp, 0.15)
                 newPoint = cubit.vertex(newV).coordinates()
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
@@ -443,7 +490,7 @@ class Arvore(object):
         count = 0
         while not (len(heap) == 0):
             count += 1
-            if count < 10000:
+            if count < 1500:
                 atual = heap.pop()
             else:
                 break
@@ -451,7 +498,17 @@ class Arvore(object):
                 circleI = geo.createCircleNormal(atual.initialPoint+1, atual.radius, atual.index)
             else:
                 circleI = atual.root.link
-            circleF = geo.createCircleNormal(atual.finalPoint+1, atual.radius, atual.index)
+            if atual.nSplit > 0 and atual.nSplit < 6:
+                ip = self.points[atual.initialPoint]
+                fp = self.points[atual.finalPoint]
+                lenght = geo.distance(ip, fp)
+                t=(lenght-atual.getRadius()[1])/lenght
+                ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
+                circleF = self.genArcFull(atual, atual.finalPoint+1, ref)
+                if circleF == -1:
+                    circleF = geo.createCircleNormal(atual.finalPoint+1, atual.radius, atual.index)
+            else:
+                circleF = geo.createCircleNormal(atual.finalPoint+1, atual.radius, atual.index)
             atual.tube = Tube([circleI], [circleF])
             if atual.son1 is not None and atual.son2 is not None:
                 self.genSons2(atual)
@@ -465,7 +522,7 @@ class Arvore(object):
                     heap.append(atual.son2.son2)
             else:
                 if atual.son1 is not None:
-                    atual.link = circleF
+                    atual.link = geo.copyCurve(circleF)
                     heap.append(atual.son1)
         self.genSurfaces()
         self.genVolumes()
@@ -641,7 +698,7 @@ class Arvore(object):
         #self.root.tube.genSurfacesI()
         while not (len(heap) == 0):
             count += 1
-            if count < 1000:
+            if count < 1500:
                 atual = heap.pop()
             #if atual.son1 is not None:
             else:
@@ -693,33 +750,58 @@ class Arvore(object):
         ipr = self.points[branch.initialPoint]
         fpr = self.points[branch.finalPoint]
         fp = self.points[branch.son1.finalPoint]
+        fp2 = self.points[branch.son2.finalPoint]
         lenght = geo.distance(ipr, fpr)
         t=(lenght-branch.radius)/lenght
         ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-        u0 = [fpr[0]-ref[0],fpr[1]-ref[1],fpr[2]-ref[2]]
-        u1 = [ref[0]-fp[0],ref[1]-fp[1],ref[2]-fp[2]]
-        u = geo2.crossProduct(u0, u1)
-        u = geo2.getVector4_3(u)
-        geo2.normalizeVector(u)
-        coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(fpr), u, -90)
+        u_0 = [fp[0]-fpr[0],fp[1]-fpr[1],fp[2]-fpr[2]]
+        u_1 = [fp2[0]-fpr[0],fp2[1]-fpr[1],fp2[2]-fpr[2]]
+        u_2 = [ref[0]-fp2[0],ref[1]-fp2[1],ref[2]-fp2[2]]
+        u1 = geo2.crossProduct(u_0, u_1)
+        u1 = geo2.getVector4_3(u1)
+        geo2.normalizeVector(u1)
+        u2 = geo2.crossProduct(u_0, u_2)
+        u2 = geo2.getVector4_3(u2)
+        geo2.normalizeVector(u2)
+        coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(fpr), u1, -90)
         vAux1 = geo.createVertex(coords[0],coords[1],coords[2])
+        
         circleAux = geo.createCircleNormal2(branch.finalPoint+1,vAux1,vAux1,branch.radius,branch.index)
         v1 = geo.createVertexOnCurveFraction(circleAux, 0.25)
         v2 = geo.createVertexOnCurveFraction(circleAux, 0.75)
         geo.deleteCurve(circleAux)
         arc1 = geo.createCircleNormal2(branch.finalPoint+1, v1, v2, branch.radius, branch.index)
         arc2 = geo.createCircleNormal2(branch.finalPoint+1, v2, v1, branch.radius, branch.index)
-        l1 = geo.createLine(v1, v2)
-        l2 = geo.createLine(v1, v2)
+        vts1 = cubit.get_relatives("curve", arc1, "vertex")
+        vts2 = cubit.get_relatives("curve", arc2, "vertex")
+        l1 = geo.createLine(vts1[0], vts1[1])
+        #l2 = geo.createLine(vts2[0], vts2[1])
+        t=(lenght-branch.radius*0.5)/lenght
+        u_3 = [cubit.vertex(vts1[0]).coordinates()[0]-cubit.vertex(vts1[1]).coordinates()[0],cubit.vertex(vts1[0]).coordinates()[1]-cubit.vertex(vts1[1]).coordinates()[1],cubit.vertex(vts1[0]).coordinates()[2]-cubit.vertex(vts1[1]).coordinates()[2]]
+        u3 = geo2.getVector4_3(u_3)
+        geo2.normalizeVector(u3)
+        refE1 = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
+        coords = geo2.rotateByAxis(geo2.getVector4_3(refE1), geo2.getVector4_3(fpr), u3, 90)
+        vE = geo.createVertex(coords[0],coords[1],coords[2])
+        mid = geo.createVertexOnCurveFraction(l1, 0.5)
+        eli = geo.createEllipseFull(vts1[0], vE, mid)
+        eli1 = geo.splitCurve2(eli, vts1[0], vts1[1])
+        eli2 = eli1-1
         
+        uaux = cubit.vertex(v1).coordinates() 
+        uaux2 = cubit.vertex(v2).coordinates() 
+        u = [uaux2[0]-uaux[0],uaux2[1]-uaux[1],uaux2[2]-uaux[2]]
+        u = geo2.getVector4_3(u)
+        geo2.normalizeVector(u)
         ip = self.points[branch.son1.initialPoint]
         fp = self.points[branch.son1.finalPoint]
         fps = self.points[branch.son1.son1.finalPoint]
         lenght = geo.distance(ip, fp)
         t=(lenght-branch.son1.radius)/lenght
         ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
-        arcsf1 = self.genArc2(branch.son1, branch.son1.finalPoint+1,ref,u,branch.son1.radius,1)
-        branch.son1.tube = Tube([arc1,l1], arcsf1)
+        arcsf1 = self.genArc2(branch.son1, branch.son1.finalPoint+1,ref,u1,branch.son1.radius,1)
+        #branch.son1.tube = Tube([arc1,l1], arcsf1)
+        branch.son1.tube = Tube([arc1,eli1], arcsf1)
         branch.son1.link = arcsf1[2]
         
         ip = self.points[branch.son2.initialPoint]
@@ -728,8 +810,9 @@ class Arvore(object):
         lenght = geo.distance(ip, fp)
         t=(lenght-branch.son2.radius)/lenght
         ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
-        arcsf2 = self.genArc2(branch.son2, branch.son2.finalPoint+1,ref,u,branch.son2.radius,2)
-        branch.son2.tube = Tube([arc2,l2], arcsf2)
+        arcsf2 = self.genArc2(branch.son2, branch.son2.finalPoint+1,ref,u1,branch.son2.radius,2)
+        #branch.son2.tube = Tube([arc2,l2], arcsf2)
+        branch.son2.tube = Tube([arc2,eli2], arcsf2)
         branch.son2.link = arcsf2[2]
                 
     def getAngle(self, son):
@@ -784,6 +867,8 @@ class Arvore(object):
         u = geo2.getVector4_3(u)
         geo2.normalizeVector(u)
         newPoint1 = geo2.rotateByAxis(geo2.getVector4_3(newPoint1), geo2.getVector4_3(newPf), u, 40)
+        vecR = geo2.getVector(pi, newPf)
+        vecF1 = geo2.getVector(newPf, newPoint1)
         #geo.createVertex(newPoint1[0],newPoint1[1],newPoint1[2])
         t=(lenght+0*branch.radius)/lenght
         newPoint2 = [(1-t)*pi[0]+t*pf[0],((1-t)*pi[1]+t*pf[1]),((1-t)*pi[2]+t*pf[2])]
@@ -793,6 +878,11 @@ class Arvore(object):
 #         u = geo2.getVector4_3(u)
 #         geo2.normalizeVector(u)
         newPoint2 = geo2.rotateByAxis(geo2.getVector4_3(newPoint2), geo2.getVector4_3(newPf), u, -40)
+        vecF2 = geo2.getVector(newPf, newPoint2)
+        ang3 = geo2.getAngle(vecF1, vecF2)
+        if ang3 < 60:
+            newPoint1 = geo2.rotateByAxis(geo2.getVector4_3(newPoint1), geo2.getVector4_3(newPf), u, 20)
+            newPoint2 = geo2.rotateByAxis(geo2.getVector4_3(newPoint2), geo2.getVector4_3(newPf), u, -20)
         #geo.createVertex(newPoint2[0],newPoint2[1],newPoint2[2])
         d1 = geo.distance(pf1, newPoint1)+geo.distance(pf2, newPoint2)
         d2 = geo.distance(pf1, newPoint2)+geo.distance(pf2, newPoint1)
@@ -866,7 +956,7 @@ class Arvore(object):
         ipr = self.points[point-1]
         coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(ipr), u, -90+off)
         vAux2 = geo.createVertex(coords[0],coords[1],coords[2])
-        circleI = geo.createCircleNormal2(point,vAux2,vAux2,radius,branch.root.index)
+        circleI = geo.createCircleNormal2(point,vAux2,vAux2,radius,branch.index)
         
         vAux3 = geo.createVertexOnCurveFraction(circleI, 0.25)
         eliFullAux = geo.createEllipseFull(vAux3, vAux1, point)
@@ -882,6 +972,36 @@ class Arvore(object):
         eli2 = eli1-1
         arcs = [eli1,eli2,eliFull]
         return arcs
+    
+    def genArcFull(self, branch, point, ref):
+        radius = branch.getRadius()
+        u = branch.getU(self.points)
+        ipr = self.points[branch.initialPoint]
+        fpr = self.points[branch.finalPoint]
+        lenght = geo.distance(ipr, fpr)
+         
+        t=(lenght-radius[0]*radius[1])/lenght
+        ref2 = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
+        ipr = self.points[point-1]
+        coords = geo2.rotateByAxis(geo2.getVector4_3(ref2), geo2.getVector4_3(ipr), u, -90)
+        vAux1 = geo.createVertex(coords[0],coords[1],coords[2])
+            
+        
+        coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(ipr), u, -90)
+        vAux2 = geo.createVertex(coords[0],coords[1],coords[2])
+        circleI = geo.createCircleNormal2(point,vAux2,vAux2,radius[1],branch.index)
+        
+        vAux3 = geo.createVertexOnCurveFraction(circleI, 0.25)
+        eliFull = geo.createEllipseFull(vAux3, vAux1, point)
+        geo.deleteCurve(circleI)
+        #geo.deleteVertex(vAux2)
+        geo.deleteVertex(vAux1)
+        #geo.deleteVertex(vAux3)
+        if eliFull == circleI:
+            tube.eprint("Erro Ellipse")
+            return -1
+        else:
+            return eliFull
 
     def splitBranch(self,branch, point):
         self.points.append(point)

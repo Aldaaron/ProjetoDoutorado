@@ -28,6 +28,11 @@ def splitCurve(c,v):
     splineID = cubit.get_last_id("curve")
     return splineID
 
+def copyCurve(c):
+    cubit.cmd("curve %d copy" % (c))
+    curveID = cubit.get_last_id("curve")
+    return curveID
+
 def splitCurve2(c,v1, v2):
     cubit.cmd("split curve %d at vertex %d %d" % (c,v1,v2))
     splineID = cubit.get_last_id("curve")

@@ -34,6 +34,7 @@ def main():
 #     arvore.save2()
     arvore.smothRadius()
     arvore.makeGeometry2()
+#    arvore.mesh()
 #    arvore.check()
     fp.close()
     fl.close()

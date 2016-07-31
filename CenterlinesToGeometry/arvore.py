@@ -526,7 +526,21 @@ class Arvore(object):
                     heap.append(atual.son1)
         self.genSurfaces()
         self.genVolumes()
-                
+        
+    def mesh(self):
+        surfs = cubit.get_relatives("volume", self.vol, "surface")
+        for x in range(0, len(surfs)):
+            id = surfs[x]
+            cubit.cmd("surface %d sizing function type skeleton min_size auto max_size auto max_gradient 1.5 min_num_layers_2d 1 min_num_layers_1d 1" % (id))
+            cubit.cmd("surface %d scheme TriMesh geometry approximation angle 15" % (id)) 
+            cubit.cmd("Trimesher surface gradation 1.3") 
+            cubit.cmd("mesh surface %d" % (id)) 
+        cubit.cmd("volume %d scheme Tetmesh proximity layers off geometry approximation angle 15" % (self.vol)) 
+        cubit.cmd("volume %d tetmesh growth_factor 1" % (self.vol)) 
+        cubit.cmd("Trimesher surface gradation 1.3") 
+        cubit.cmd("Trimesher volume gradation 1.3") 
+        cubit.cmd("mesh volume %d" % (self.vol)) 
+              
     def makeGeometry(self):
         for p in self.points:
             geo.createVertex(p[0],p[1],p[2])

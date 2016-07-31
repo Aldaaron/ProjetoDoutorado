@@ -44,13 +44,6 @@ class Tube(object):
             eprint(self.finalVertexs)
             
     def genSurfaces(self):
-#         for i in range(0, len(self.initialArcs)-1):
-#             cvs = [self.initialArcs[i],self.finalArcs[i], self.lines[i],self.lines[i+1]]
-#             self.surfs.append(geo.createSurfaceCurve2(cvs))
-#         cvs = [self.initialArcs[-1],self.finalArcs[-1], self.lines[-1],self.lines[0]]
-#         self.surfs.append(geo.createSurfaceCurve2(cvs))
-#         self.surfs.append(geo.createSurfaceCurve2(self.initialArcs))
-#         self.surfs.append(geo.createSurfaceCurve2(self.finalArcs))
         for i in range(0, len(self.initialArcs)):
             self.surfs.append(geo.createSkinCurve(self.initialArcs[i], self.finalArcs[i]))
         self.surfs.append(geo.createSurfaceCurve2(self.initialArcs))

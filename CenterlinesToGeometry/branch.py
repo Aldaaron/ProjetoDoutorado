@@ -1,5 +1,4 @@
 import geo
-from vessel import Vessel
 import cubit
 import math
 import random
@@ -16,9 +15,13 @@ class Branch(object):
         self.son2 = None
         self.root = None
         self.tube = None
+        self.circleI = 0
+        self.circleF = 0
         self.nSplit = 0
         self.rootRadius = radius
         self.u = None
+        self.surfs = []
+        self.delete = False
         
     def getRadius(self):
         smallR = 0.6

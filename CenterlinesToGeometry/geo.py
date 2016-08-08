@@ -111,6 +111,11 @@ def createSkinCurve(c1,c2):
     cubit.cmd("create surface skin curve %d %d" % (c1,c2)) 
     surfID = cubit.get_last_id("surface")
     return surfID
+
+def compositeCurve(c1,c2):
+    cubit.cmd("composite create curve %d %d " % (c1,c2)) 
+    curveID = cubit.get_last_id("curve")
+    return curveID
     
 def createSurfaceCurve(c):
     cubit.cmd("create surface curve %d" % (c))
@@ -130,12 +135,12 @@ def createVolume(surfs):
     ss = ""
     for s in surfs:
         ss += str(s) + " "
-    cubit.cmd("create volume surface %s" % (ss))
+    cubit.cmd("create volume surface %s noheal" % (ss))
     #volID = cubit.get_last_id("volume")
     return volID
 
 def createVolumeFromAllSurfaces():
-    cubit.cmd("create volume surface all noheal")
+    cubit.cmd("create volume surface all")
     volID = cubit.get_last_id("volume")
     return volID
 
@@ -168,6 +173,11 @@ def mergeVolumes(v1,v2):
     
 def unionAll():
     cubit.cmd("unite volume all")
+    
+def createBoudingBox(v,e):
+    cubit.cmd("create brick bounding box volume %d extended absolute %f" % (v,e))
+    volID = cubit.get_last_id("volume")
+    return volID
 
 def unionVolumes(v1, v2):
     cubit.cmd("unite volume %d %d"% (v1, v2))
@@ -178,7 +188,12 @@ def stepUnion(vols):
     for x in range(0, len(vols)-1):
         cubit.cmd("unite volume %d %d" % (volID,vols[x+1]))
     return volID
-    
+
+def subtractVolumes(v1,v2):
+    cubit.cmd("subtract volume %d from volume %d" % (v2,v1))
+    volID = cubit.get_last_id('volume')
+    return volID
+   
 def createCone(h,r,t):
     cubit.cmd("create frustum height %f radius %f top %f" % (h,r,t))
     volID = cubit.get_last_id('volume')

@@ -1,6 +1,5 @@
 import geo
 import geo2
-from vessel import Vessel
 import cubit
 import math
 import random
@@ -39,6 +38,25 @@ class Arvore(object):
                         heap.append(son)
         self.sort()
         self.vol = None
+        self.surfVols = []
+#         self.deleteLast()
+    
+    def deleteLast(self):
+        heap = [self.root]
+        while not (len(heap) == 0):
+            atual = heap.pop()
+            if atual.son1 is None and atual.son2 is None and not atual.delete:
+                if atual.root.son1 == atual:
+                    atual.root.son1 = None
+                    atual.root.delete = True
+                elif atual.root.son2 == atual:
+                    atual.root.son2 = None
+                    atual.root.delete = True
+                
+            if atual.son1 is not None:
+                heap.append(atual.son1)
+            if atual.son2 is not None:
+                heap.append(atual.son2)  
     
     def smothRadius(self):
         heap = [self.root]
@@ -143,7 +161,7 @@ class Arvore(object):
         heap = [branch]
         while not (len(heap) == 0):
             atual = heap.pop()
-            if atual.root.son1 == atual:
+            if branch.root.son1 == atual:
                 self.points[atual.initialPoint][0] += xyz[0]
                 self.points[atual.initialPoint][1] += xyz[1]
                 self.points[atual.initialPoint][2] += xyz[2]
@@ -191,167 +209,8 @@ class Arvore(object):
             if atual.son2 is not None:
                 heap.append(atual.son2) 
         self.sort() 
-        
-    def split2(self):
-        heap = [self.root]
-        while not (len(heap) == 0):
-            atual = heap.pop()
-            if atual.son1 is not None and atual.son2 is not None:
-                #self.bif(atual) 
-                self.bif2(atual)
-                
-            if atual.son1 is not None:
-                heap.append(atual.son1)
-            if atual.son2 is not None:
-                heap.append(atual.son2) 
-        self.sort() 
     
-    def bif2(self, branch):
-        ip = self.points[branch.initialPoint]
-        fp = self.points[branch.finalPoint]
-        ips = self.points[branch.son1.initialPoint]
-        fps = self.points[branch.son1.finalPoint]
-        ips2 = self.points[branch.son2.initialPoint]
-        fps2 = self.points[branch.son2.finalPoint]
-        lenght = geo.distance(ip, fp)
-        t=(lenght-branch.radius)/lenght
-        ipaux = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
-        fp = ipaux
-        self.points[branch.finalPoint] = ipaux
-        lenght = geo.distance(ipaux, fps)
-        t=(branch.radius*2)/lenght
-        fpaux = [(1-t)*ipaux[0]+t*fps[0],((1-t)*ipaux[1]+t*fps[1]),((1-t)*ipaux[2]+t*fps[2])]
-        ips = fpaux
-        
-        ipaux2 = [fp[0],fp[1],fp[2]]
-        lenght = geo.distance(fp, fps2)
-        t=(branch.radius*2)/lenght
-        fpaux2 = [(1-t)*fp[0]+t*fps2[0],((1-t)*fp[1]+t*fps2[1]),((1-t)*fp[2]+t*fps2[2])]
-        ips2 = fpaux2
-        
-#         vecR = geo2.getVector(ip, fp)
-#         vecAux = geo2.getVector(ipaux, fpaux)
-#         vecS = geo2.getVector(ips, fps)
-#         vecX = [1,0,0]
-#         vecY = [0,1,0]
-#         vecZ = [0,0,1]
-#         if branch == self.root:
-#             print "Root"
-#             print geo2.getAngle(vecAux, vecX)
-#             print geo2.getAngle(vecAux, vecY)
-#             print geo2.getAngle(vecAux, vecZ)
-#             print ""
-#             print "Son"
-#             print geo2.getAngle(vecS, vecX)
-#             print geo2.getAngle(vecS, vecY)
-#             print geo2.getAngle(vecS, vecZ)
-
-        self.points.append(fpaux)
-        geo.createVertex(fpaux[0], fpaux[1], fpaux[2])
-        new1 = Branch(branch.finalPoint, len(self.points)-1, branch.radius*0.75)
-        new1.root = branch
-        new1.son1 = branch.son1
-        new1.son1.initialPoint = len(self.points)-1
-        new1.son1.root = new1
-        branch.son1 = new1
-           
-        self.points.append(fpaux2)
-        geo.createVertex(fpaux2[0], fpaux2[1], fpaux2[2])
-        new2 = Branch(branch.finalPoint, len(self.points)-1, branch.radius*0.75)
-        new2.root = branch
-        new2.son2 = branch.son2
-        new2.son2.initialPoint = len(self.points)-1
-        new2.son2.root = new2
-        branch.son2 = new2
-        
     def smoth(self):
-        change = True
-        count = 0
-        while change:
-            change = False
-            heap = []
-            if self.root.son1 is not None:
-                heap.append(self.root.son1)
-            if self.root.son2 is not None:
-                heap.append(self.root.son2)
-            while not (len(heap) == 0):
-                atual = heap.pop()
-                initialRoot = self.points[atual.root.initialPoint]
-                finalRoot = self.points[atual.root.finalPoint]
-                anglesRoot = geo.getAngles(initialRoot, finalRoot)
-                ay = geo.radiansToDegree(anglesRoot[0])
-                initial = self.points[atual.initialPoint]
-                final = self.points[atual.finalPoint]
-                angles = geo.getAngles(initial, final)
-                ay2 = geo.radiansToDegree(angles[0])
-                a = ay2-ay
-                if a > 180:
-                    a -= 360
-                if a < -180:
-                    a += 360
-                dif = abs(a)
-                rot = False
-                bothSons = False
-                #if atual.root.son1 is not None and atual.root.son2 is not None:
-                #    bothSons = True
-                if dif > 25: #and not bothSons:
-                    print dif
-                    change = True
-                    positive = True
-                    if a < 0:
-                        positive = False
-                    if dif > 60:
-                        angleRot = 20
-                    else:
-                        angleRot = 10
-                    if positive:
-                        angleRot = -angleRot
-                    rot = True
-#                 if atual.son1 is not None and atual.son2 is not None:
-#                     if dif < 10:
-#                         print " DIFFFF"
-#                         change = True
-#                         positive = True
-#                         if a < 0:
-#                             positive = False
-#                         angleRot = 20
-#                         if not positive:
-#                             angleRot = -angleRot
-#                         rot = True
-                if rot:  
-                    count = count+1
-                    print count  
-                    vertexCoords = [(initial[0]+2*final[0])/3,(initial[1]+2*final[1])/3,(initial[2]+2*final[2])/3]
-                    vertexCoords[0] = vertexCoords[0]
-                    vertexCoords[1] = vertexCoords[1]
-                    vertexCoords[2] = vertexCoords[2]
-                    geo.rotate(vertexCoords,initial,angleRot) 
-                    self.points.append(vertexCoords)
-                    rootRadius = atual.root.radius
-                    if atual.root.son1 is not None and atual.root.son2 is not None:
-                        rootRadius = rootRadius*0.75
-                    new = Branch(len(self.points)-1, atual.finalPoint, (2*atual.radius+rootRadius)/3)
-                    new.root = atual
-                    new.son1 = atual.son1
-                    new.son2 = atual.son2
-                    if atual.son1 is not None:
-                        heap.append(atual.son1)
-                        new.son1.root = new
-                    if atual.son2 is not None:
-                        heap.append(atual.son2)
-                        new.son2.root = new
-                        atual.son2 = None 
-                    atual.finalPoint = new.initialPoint
-                    atual.son1 = new
-                else:
-                    if atual.son1 is not None:
-                        heap.append(atual.son1)
-                    if atual.son2 is not None:
-                        heap.append(atual.son2)
-        self.sort()  
-        print "FIM"  
-    
-    def smoth2(self):
         heap = [self.root]
         while not (len(heap) == 0):
             atual = heap.pop()
@@ -361,10 +220,6 @@ class Arvore(object):
                 r1f = self.points[atual.son1.finalPoint]
                 f1i = self.points[rSon1.initialPoint]
                 f1f = self.points[rSon1.finalPoint]
-#                 t = 0.9
-#                 ref = [(1-t)*f1i[0]+t*f1f[0],((1-t)*f1i[1]+t*f1f[1]),((1-t)*f1i[2]+t*f1f[2])]
-#                 self.splitBranch(rSon1, ref)
-#                 f1f = self.points[rSon1.finalPoint]
                 v1 = geo.createVertex(r1i[0], r1i[1], r1i[2])
                 v2 = geo.createVertex(f1i[0], f1i[1], f1i[2])
                 v3 = geo.createVertex(f1f[0], f1f[1], f1f[2])
@@ -443,8 +298,8 @@ class Arvore(object):
                     heap.append(atual.son2) 
                     
     def save(self):
-        pointsFile = open(folder+"pontos2.txt", 'w')
-        linesFile = open(folder+"linhas2.txt", 'w')
+        pointsFile = open(folder+"pontos2r.txt", 'w')
+        linesFile = open(folder+"linhas2r.txt", 'w')
         for p in self.points:
             pointsFile.write("%f\t%f\t%f\n" % (p[0],p[1],p[2]))
         pointsFile.close()
@@ -459,8 +314,8 @@ class Arvore(object):
         linesFile.close()
         
     def save2(self):
-        pointsFile = open(folder+"pontos3.txt", 'w')
-        linesFile = open(folder+"linhas3.txt", 'w')
+        pointsFile = open(folder+"pontos3r.txt", 'w')
+        linesFile = open(folder+"linhas3r.txt", 'w')
         for p in self.points:
             pointsFile.write("%f\t%f\t%f\n" % (p[0],p[1],p[2]))
         pointsFile.close()
@@ -474,7 +329,7 @@ class Arvore(object):
                 heap.append(atual.son2) 
         linesFile.close()
     
-    def makeGeometry2(self):
+    def makeGeometry(self):
         for p in self.points:
             geo.createVertex(p[0],p[1],p[2])
         heap = [self.root]
@@ -509,9 +364,10 @@ class Arvore(object):
                     circleF = geo.createCircleNormal(atual.finalPoint+1, atual.radius, atual.index)
             else:
                 circleF = geo.createCircleNormal(atual.finalPoint+1, atual.radius, atual.index)
-            atual.tube = Tube([circleI], [circleF])
+            atual.circleI = circleI
+            atual.circleF = circleF
             if atual.son1 is not None and atual.son2 is not None:
-                self.genSons2(atual)
+                self.genSons(atual)
                 if atual.son1.son1 is not None:
                     heap.append(atual.son1.son1)
                 if atual.son1.son2 is not None:
@@ -522,190 +378,143 @@ class Arvore(object):
                     heap.append(atual.son2.son2)
             else:
                 if atual.son1 is not None:
-                    atual.link = geo.copyCurve(circleF)
+                    atual.link = circleF#geo.copyCurve(circleF)
                     heap.append(atual.son1)
         self.genSurfaces()
         self.genVolumes()
+        self.vol = cubit.get_entities("volume")[0]
+        bb = geo.createBoudingBox(self.vol, self.root.radius/4)
+        self.vol = geo.subtractVolumes(bb, self.vol)
+        cubit.cmd('Color Define "%s" RGB %f %f %f' % ("darkred", 0.75,0,0))
+        geo.colorVolume(self.vol,'user "darkred"')
+        fix = True
+        while fix:
+            fix = self.fixCurves()
         
     def mesh(self):
-        surfs = cubit.get_relatives("volume", self.vol, "surface")
-        for x in range(0, len(surfs)):
-            id = surfs[x]
-            cubit.cmd("surface %d sizing function type skeleton min_size auto max_size auto max_gradient 1.5 min_num_layers_2d 1 min_num_layers_1d 1" % (id))
-            cubit.cmd("surface %d scheme TriMesh geometry approximation angle 15" % (id)) 
-            cubit.cmd("Trimesher surface gradation 1.3") 
-            cubit.cmd("mesh surface %d" % (id)) 
+#         surfs = cubit.get_relatives("volume", self.vol, "surface")
+#         for x in range(0, len(surfs)):
+#             id = surfs[x]
+#             cubit.cmd("surface %d sizing function type skeleton min_size auto max_size auto max_gradient 1.5 min_num_layers_2d 1 min_num_layers_1d 1" % (id))
+#             cubit.cmd("surface %d scheme TriMesh geometry approximation angle 15" % (id)) 
+#             cubit.cmd("Trimesher surface gradation 1.3") 
+#             cubit.cmd("mesh surface %d" % (id)) 
+#         surfs = cubit.get_relatives("volume", self.vol, "surface")
+#         cubit.cmd("surface %d %d %d %d %d %d size auto factor 5" % (surfs[0],surfs[1],surfs[2],surfs[3],surfs[4],surfs[5]))
+#         cubit.cmd("surface %d %d %d %d %d %d scheme TriMesh geometry approximation angle 15" % (surfs[0],surfs[1],surfs[2],surfs[3],surfs[4],surfs[5]))
+#         cubit.cmd("Trimesher surface gradation 1.3") 
+#         cubit.cmd("mesh surface %d %d %d %d %d %d" % (surfs[0],surfs[1],surfs[2],surfs[3],surfs[4],surfs[5]))
+        cubit.cmd("volume %d size auto factor 5" % (self.vol)) 
         cubit.cmd("volume %d scheme Tetmesh proximity layers off geometry approximation angle 15" % (self.vol)) 
         cubit.cmd("volume %d tetmesh growth_factor 1" % (self.vol)) 
         cubit.cmd("Trimesher surface gradation 1.3") 
         cubit.cmd("Trimesher volume gradation 1.3") 
         cubit.cmd("mesh volume %d" % (self.vol)) 
-              
-    def makeGeometry(self):
-        for p in self.points:
-            geo.createVertex(p[0],p[1],p[2])
-        heap = [self.root]
-        while not (len(heap) == 0):
-            atual = heap.pop()
-            lineID = geo.createLine(atual.initialPoint+1, atual.finalPoint+1)
-            atual.index = lineID
-            if atual.son1 is not None:
-                heap.append(atual.son1)
-            if atual.son2 is not None:
-                heap.append(atual.son2) 
-        
-        heap = [self.root]
-        count = 0
-        while not (len(heap) == 0):
-            count += 1
-            if count < 10000:
-                atual = heap.pop()
-            else:
-                break
-            if atual.root is None:
-                if atual.son1 is not None and atual.son2 is not None:
-                    ipr = self.points[atual.initialPoint]
-                    fpr = self.points[atual.finalPoint]
-                    fp = self.points[atual.son1.finalPoint]
-                    lenght = geo.distance(ipr, fpr)
-                    t=(-atual.radius)/lenght
-                    ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                    u0 = [fpr[0]-ref[0],fpr[1]-ref[1],fpr[2]-ref[2]]
-                    u1 = [ref[0]-fp[0],ref[1]-fp[1],ref[2]-fp[2]]
-                    u = geo2.crossProduct(u0, u1)
-                    u = geo2.getVector4_3(u)
-                    geo2.normalizeVector(u)
-                    arcsi = self.genArc(atual, atual.initialPoint+1,ref,u,atual.radius)
-                    t=(lenght-atual.radius)/lenght
-                    ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                    arcsf = self.genArc(atual, atual.finalPoint+1,ref,u,atual.radius)
-                    atual.tube = Tube(arcsi,arcsf,atual.initialPoint+1,atual.finalPoint+1)
-                    t=(lenght-atual.radius*0.5)/lenght
-                    ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                    coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(fpr), u, -90)
-                    v1 = geo.createVertex(coords[0],coords[1],coords[2])
-                    coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(fpr), u, 90)
-                    v2 = geo.createVertex(coords[0],coords[1],coords[2])
-                    self.genSons(atual, arcsf,v1,v2,u) 
-                    if atual.son1.son1 is not None:
-                        heap.append(atual.son1.son1)
-                    if atual.son1.son2 is not None:
-                        heap.append(atual.son1.son2) 
-                    if atual.son2.son1 is not None:
-                        heap.append(atual.son2.son1)
-                    if atual.son2.son2 is not None:
-                        heap.append(atual.son2.son2)
-                else:
-                    if atual.son1 is not None:
-                        heap.append(atual.son1)     
-            else:
-                if atual.son1 is not None and atual.son2 is not None:
-                    ipr = self.points[atual.initialPoint]
-                    fpr = self.points[atual.finalPoint]
-                    fp = self.points[atual.son1.finalPoint]
-                    lenght = geo.distance(ipr, fpr)
-                    t=(-atual.radius)/lenght
-                    ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                    u0 = [fpr[0]-ref[0],fpr[1]-ref[1],fpr[2]-ref[2]]
-                    u1 = [ref[0]-fp[0],ref[1]-fp[1],ref[2]-fp[2]]
-                    u = geo2.crossProduct(u0, u1)
-                    u = geo2.getVector4_3(u)
-                    geo2.normalizeVector(u)
-                    arcsi = []
-                    for i in range(0, 2):
-                        arcsi.append([atual.root.tube.finalVertexs[i], atual.root.tube.finalArcs[i]])
-                    t=(lenght-atual.radius)/lenght
-                    ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                    arcsf = self.genArc(atual, atual.finalPoint+1,ref,u,atual.radius)
-                    atual.tube = Tube(arcsi,arcsf,atual.initialPoint+1,atual.finalPoint+1)  
-                    t=(lenght-atual.radius*0.5)/lenght
-                    ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                    coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(fpr), u, -90)
-                    v1 = geo.createVertex(coords[0],coords[1],coords[2])
-                    coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(fpr), u, 90)
-                    v2 = geo.createVertex(coords[0],coords[1],coords[2])
-                    self.genSons(atual, arcsf,v1,v2,u)
-                    if atual.son1.son1 is not None:
-                        heap.append(atual.son1.son1)
-                    if atual.son1.son2 is not None:
-                        heap.append(atual.son1.son2) 
-                    if atual.son2.son1 is not None:
-                        heap.append(atual.son2.son1)
-                    if atual.son2.son2 is not None:
-                        heap.append(atual.son2.son2)
-                else:
-                    ipr = self.points[atual.initialPoint]
-                    fpr = self.points[atual.finalPoint]
-                    if atual.son1 is not None:
-                        fp = self.points[atual.son1.finalPoint]
-                        lenght = geo.distance(ipr, fpr)
-                        t=(-atual.radius)/lenght
-                        ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                        u0 = [fpr[0]-ref[0],fpr[1]-ref[1],fpr[2]-ref[2]]
-                        u1 = [ref[0]-fp[0],ref[1]-fp[1],ref[2]-fp[2]]
-                        u = geo2.crossProduct(u0, u1)
-                        u = geo2.getVector4_3(u)
-                        geo2.normalizeVector(u)
-                    else:
-                        fp = self.points[atual.root.initialPoint]
-                        lenght = geo.distance(ipr, fpr)
-                        t=(-atual.radius)/lenght
-                        ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                        fpr = self.points[atual.finalPoint]
-                        u0 = [fpr[0]-ref[0],fpr[1]-ref[1],fpr[2]-ref[2]]
-                        u1 = [ref[0]-fp[0],ref[1]-fp[1],ref[2]-fp[2]]
-                        angle = self.getAngle(atual)
-                        if angle < 0:
-                            u = geo2.crossProduct(u0, u1)
-                        else:
-                            u = geo2.crossProduct(u1, u0)
-                        u = geo2.getVector4_3(u)
-                        geo2.normalizeVector(u)
-                    arcsi = []
-                    for i in range(0, 2):
-                        arcsi.append([atual.root.tube.finalVertexs[i], atual.root.tube.finalArcs[i]])
-                    t=(lenght-atual.radius)/lenght
-                    ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-                    arcsf = self.genArc(atual, atual.finalPoint+1,ref,u,atual.radius)
-                    
-                    atual.tube = Tube(arcsi,arcsf,atual.initialPoint+1,atual.finalPoint+1)   
-                    if atual.son1 is not None:
-                        #atual.son1.arcsi = arcsf
-                        heap.append(atual.son1)
-        #self.genSurfaces() 
-        #self.genVolumes()
-
-    def genVolumes(self):
-        heap = [self.root]
-        count = 0
-        #self.root.tube.genSurfacesI()
-        while not (len(heap) == 0):
-            count += 1
-            if count < 1500:   
-                atual = heap.pop()
-            else:
-                break
-            if atual.tube is not None:
-                atual.tube.genVolume()
-                if atual == self.root:
-                    self.vol = atual.tube.vol
-                else:
-#                     geo.imprintVolumes(self.vol, atual.tube.vol)
-#                     geo.mergeVolumes(self.vol, atual.tube.vol)
-                    self.vol = geo.unionVolumes(self.vol, atual.tube.vol)
-            if atual.son1 is not None:
-                heap.append(atual.son1)
-            if atual.son2 is not None:
-                heap.append(atual.son2) 
-#         geo.imprintMergeAll() 
-#         geo.unionAll()
-        cubit.cmd('Color Define "%s" RGB %f %f %f' % ("darkred", 0.75,0,0))
-        geo.colorVolume(self.vol,'user "darkred"')
-
-    def genVolumes2(self):
-        #geo.imprintMergeAll()
-        geo.createVolumeFromAllSurfaces()
     
+    def mesh2(self):
+        small = self.root.radius/100
+        surfs = cubit.get_relatives("volume", self.vol, "surface")
+        for x in range(0, len(surfs)):
+            id = surfs[x]
+            cvs = cubit.get_relatives("surface", id, "curve")
+            smallCurve = False
+            smallId = 0
+            for y in range(0, len(cvs)):
+                if cubit.get_curve_length(cvs[y]) < small:
+                    smallId = cvs[y]
+                    smallCurve = True
+            if smallCurve:
+                min = cubit.get_curve_radius(smallId)/2
+                cubit.cmd("surface %d sizing function type skeleton min_size %f max_size auto max_gradient 1.5 min_num_layers_2d 1 min_num_layers_1d 1" % (id,min))
+                cubit.cmd("surface %d scheme TriMesh geometry approximation angle 15" % (id)) 
+                cubit.cmd("Trimesher surface gradation 1.3") 
+                #cubit.cmd("mesh surface %d" % (id)) 
+            else:
+                cubit.cmd("surface %d size auto factor 6" % (id)) 
+                cubit.cmd("surface %d scheme TriMesh geometry approximation angle 15" % (id)) 
+                cubit.cmd("Trimesher surface gradation 1.3") 
+                #cubit.cmd("mesh surface %d" % (id))  
+        cubit.cmd("mesh surface all") 
+        cubit.cmd("volume %d size auto factor 6" % (self.vol)) 
+        cubit.cmd("volume %d scheme Tetmesh proximity layers off geometry approximation angle 15" % (self.vol)) 
+        cubit.cmd("volume %d tetmesh growth_factor 1" % (self.vol)) 
+        cubit.cmd("Trimesher surface gradation 1.3") 
+        cubit.cmd("Trimesher volume gradation 1.3") 
+        cubit.cmd("mesh volume %d" % (self.vol)) 
+        
+    def fixCurves(self):
+        small = self.root.radius/100
+        cvs = cubit.get_relatives("volume", self.vol, "curve")
+        for x in range(0, len(cvs)):
+            type1 = cubit.get_curve_type(cvs[x])
+            virtual1 = cubit.is_virtual("curve", cvs[x])
+            if type1 == "Ellipse curve" or type1 == "Arc curve" or virtual1 or type1 == "Spline curve":
+                vts1 = cubit.get_relatives("curve", cvs[x], "vertex")
+                for y in range(0, len(cvs)):
+                    type2 = cubit.get_curve_type(cvs[y])
+                    virtual2 = cubit.is_virtual("curve", cvs[y])
+                    vts2 = cubit.get_relatives("curve", cvs[y], "vertex")
+                    equal = False
+                    arcEli = type2 == "Ellipse curve" or type2 == "Arc curve" or type2 == "Spline curve"
+                    equal = type1 == type2 or virtual2 or (virtual1 and arcEli)
+                    if equal and x != y and len(vts1) > 1 and len(vts2) > 1:
+                        if vts1[0] == vts2[0] or vts1[0] == vts2[1] or vts1[1] == vts2[0] or vts1[1] == vts2[1]:
+                            cubit.set_modified()
+                            geo.compositeCurve(cvs[x], cvs[y])
+                            if cubit.is_modified():
+                                return True
+                    
+        return False        
+#             if cubit.get_curve_length(cvs[x]) < small:
+#                 geo.compositeCurve(cvs[x]-1, cvs[x])
+#                 vts = cubit.get_relatives("curve", cvs[x], "vertex")
+#                 for y in range(0, len(cvs)):
+#                     vts2 = cubit.get_relatives("curve", cvs[y], "vertex")
+#                     if len(vts2) == 2:
+#                         if vts[0] == vts2[0] or vts[0] == vts2[1] or vts[1] == vts2[0] or vts[1] == vts2[1]:
+#                             print str(cvs[x]) + " " + str(cvs[y])                     
+        
+    def saveMesh(self):
+        nNodes = cubit.get_node_count()
+        nTets = cubit.get_tet_count()
+        meshFile = open(folder+"mesh.xml", 'w')
+        meshFile.write('<mesh celltype="tetrahedron" dim="3">\n')
+        meshFile.write('  <nodes size="%d">\n' % (nNodes))
+        for x in range(0, nNodes):
+            coords = cubit.get_nodal_coordinates(x+1)
+            meshFile.write('    <node id="%d" x="%f" y="%f" z="%f"/>\n' % (x,coords[0],coords[1],coords[2]))
+        meshFile.write('  </nodes>\n')
+        meshFile.write('  <elements size="%d">\n' % (nTets))
+        for x in range(0, nTets):
+            nodes = cubit.get_connectivity("tet", x+1)
+            meshFile.write('    <element id="%d" v0="%d" v1="%d" v2="%d" v3="%d"/>\n' % (x,nodes[0]-1,nodes[1]-1,nodes[2]-1,nodes[3]-1))
+        meshFile.write('  </elements>\n')
+        meshFile.write('  <element_data type="fiber_transversely_isotropic">\n')
+        for x in range(0, nTets):
+            meshFile.write('    <element id="%d">\n' %(x))
+            meshFile.write('      <fiber>1.000000,0.000000,0.000000</fiber>\n')
+            meshFile.write('    </element>\n')
+        meshFile.write('  </element_data>\n')
+        meshFile.write('</mesh>\n')
+        meshFile.write('<electrophysiology>\n')
+        meshFile.write('  <stimuli number="1">\n')
+        bb = cubit.get_bounding_box("volume", self.vol)
+        min = [bb[0],bb[1],bb[2]]
+        max = [bb[3],bb[4],bb[5]]
+        x0 = bb[0]
+        x1 = 0.8*x0 + 0.2*bb[1]
+        y0 = bb[3]
+        y1 = 0.8*y0 + 0.2*bb[4]
+        z0 = bb[6]
+        z1 = 0.8*z0 + 0.2*bb[7]
+#         x1 = x0 + max[0]/10
+#         y1 = y0 + max[1]/10
+#         z1 = z0 + max[2]/10
+        meshFile.write('    <stim start="0.00" duration="4.00" value="-35.7140" x0="%f" x1="%f" y0="%f" y1="%f" z0="%f" z1="%f" />\n' % (x0,x1,y0,y1,z0,z1))
+        meshFile.write('  </stimuli>\n')
+        meshFile.write('</electrophysiology>\n')
+        meshFile.close()
+        
     def genSurfaces(self):
         heap = [self.root]
         count = 0
@@ -714,53 +523,81 @@ class Arvore(object):
             count += 1
             if count < 1500:
                 atual = heap.pop()
-            #if atual.son1 is not None:
             else:
                 break
-            if atual.tube is not None:
-                atual.tube.genSurfaces()
-#             if count == 3:
-#                 atual.tube.genSurfacesF()
-#             if atual.son1 is None and atual.son2 is None:
-#                 atual.tube.genSurfacesF()
+            circles = []
+            circles.append(atual.circleI)
+            end = False
+            surfs = []
+            while not end:
+                if atual.son1 is not None and atual.son2 is not None:
+                    end = True
+                    circles.append(atual.circleF)
+                elif atual.son1 is None and atual.son2 is None:
+                    end = True
+                    circles.append(atual.circleF)
+                else:
+                    if atual.root.son1 is not None and atual.root.son2 is not None:
+                        atual.tube.genSurfaces()
+                        surfs.extend(atual.tube.surfs)
+                    circles.append(atual.circleF)
+                    atual = atual.son1
+            if len(circles) == 2:
+                surfs.append(geo.createSurfaceCurve(circles[0]))
+                surfs.append(geo.createSkinCurve(circles[0], circles[1]))
+            if len(circles) > 2:
+                circles.remove(circles[0])
+                surfs.append(geo.createSkinCurve2(circles))
+            if atual.son1 is None and atual.son2 is None:
+                surfs.append(geo.createSurfaceCurve(circles[-1]))
+            self.surfVols.extend(surfs)
+            
             if atual.son1 is not None:
                 heap.append(atual.son1)
             if atual.son2 is not None:
                 heap.append(atual.son2) 
+                
+    def genVolumes(self):
+#         for x in range(0, len(self.surfVols)):
+# #             bodies = []
+# #             for s in self.surfVols[x]:
+# #                 bodies.append(cubit.get_owning_body("surface", s))
+# #             geo.imprintBody(bodies) 
+# #             geo.mergeBody(bodies) 
+#             vol = geo.createVolume(self.surfVols[x])
+#             if self.vol is None:
+#                 self.vol = vol
+#             else:
+# #                 geo.imprintVolumes(self.vol, vol)
+# #                 geo.mergeVolumes(self.vol, vol)
+#                 self.vol = geo.unionVolumes(self.vol, vol)
+        self.vol = geo.createVolumeFromAllSurfaces()
+        free_curve_id_list = cubit.get_list_of_free_ref_entities("curve")
+        for id in free_curve_id_list:
+            geo.deleteCurve(id)
+        free_vertex_id_list = cubit.get_list_of_free_ref_entities("vertex")
+        for id in free_vertex_id_list:
+            geo.deleteVertex(id)
+#         heap = [self.root]
+#         count = 0
+#         while not (len(heap) == 0):
+#             count += 1
+#             if count < 1500:   
+#                 atual = heap.pop()
+#             else:
+#                 break
+#             if atual == self.root:
+#                 self.vol = geo.createVolume(atual.surfs)
+#             else:
+#                 vol = geo.createVolume(atual.surfs)
+#                 self.vol = geo.unionVolumes(self.vol, vol)
+#             if atual.son1 is not None:
+#                 heap.append(atual.son1)
+#             if atual.son2 is not None:
+#                 heap.append(atual.son2) 
     
-    def genSons(self, atual, arcsi,u2):
-        eli = geo.createLine(arcsi[0][0],arcsi[1][0])
-        ip = self.points[atual.son1.initialPoint]
-        fp = self.points[atual.son1.finalPoint]
-        fps = self.points[atual.son1.son1.finalPoint]
-        lenght = geo.distance(ip, fp)
-        t=(lenght-atual.son1.radius)/lenght
-        ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
-        u0 = [fp[0]-ip[0],fp[1]-ip[1],fp[2]-ip[2]]
-        u1 = [fp[0]-fps[0],fp[1]-fps[1],fp[2]-fps[2]]
-        u = geo2.crossProduct(u0, u1)
-        u = geo2.getVector4_3(u)
-        geo2.normalizeVector(u)
-        arcsf1 = self.genArc2(atual.son1, atual.son1.finalPoint+1,ref,u2,atual.son1.radius,1)
-        atual.son1.tube = Tube([[arcsi[1][0],eli],arcsi[0]], arcsf1, atual.initialPoint+1, atual.finalPoint+1)
-       
-        ip = self.points[atual.son2.initialPoint]
-        fp = self.points[atual.son2.finalPoint]
-        fps = self.points[atual.son2.son1.finalPoint]
-        lenght = geo.distance(ip, fp)
-        t=(lenght-atual.son2.radius)/lenght
-        ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
-        u0 = [fp[0]-ip[0],fp[1]-ip[1],fp[2]-ip[2]]
-        u1 = [fp[0]-fps[0],fp[1]-fps[1],fp[2]-fps[2]]
-        u = geo2.crossProduct(u0, u1)
-        u = geo2.getVector4_3(u)
-        geo2.normalizeVector(u)
-        arcsf2 = self.genArc2(atual.son2, atual.son2.finalPoint+1,ref,u2,atual.son2.radius,2)
-        atual.son2.tube = Tube([[arcsi[0][0],eli],arcsi[1]], arcsf2, atual.initialPoint+1, atual.finalPoint+1)
-#         atual.son2.tube = Tube([[arcsi[1][0],eli3],[v2,eli4],arcsi[3],arcsi[0]], arcsf2, atual.son2.initialPoint+1, atual.son2.finalPoint+1)
-#        atual.son2.tube = Tube([[arcsi[1][0],eli3],[atual.finalPoint+1,eli4],arcsi[3],arcsi[0]], arcsf2, atual.initialPoint+1, atual.finalPoint+1)
     
-    def genSons2(self, branch):
+    def genSons(self, branch):
         ipr = self.points[branch.initialPoint]
         fpr = self.points[branch.finalPoint]
         fp = self.points[branch.son1.finalPoint]
@@ -768,6 +605,8 @@ class Arvore(object):
         lenght = geo.distance(ipr, fpr)
         t=(lenght-branch.radius)/lenght
         ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
+        t2=(lenght+branch.radius*0.75)/lenght
+        ref2 = [(1-t2)*ipr[0]+t2*fpr[0],((1-t2)*ipr[1]+t2*fpr[1]),((1-t2)*ipr[2]+t2*fpr[2])]
         u_0 = [fp[0]-fpr[0],fp[1]-fpr[1],fp[2]-fpr[2]]
         u_1 = [fp2[0]-fpr[0],fp2[1]-fpr[1],fp2[2]-fpr[2]]
         u_2 = [ref[0]-fp2[0],ref[1]-fp2[1],ref[2]-fp2[2]]
@@ -779,7 +618,8 @@ class Arvore(object):
         geo2.normalizeVector(u2)
         coords = geo2.rotateByAxis(geo2.getVector4_3(ref), geo2.getVector4_3(fpr), u1, -90)
         vAux1 = geo.createVertex(coords[0],coords[1],coords[2])
-        
+        vAP = geo.createVertex(ref2[0],ref2[1],ref2[2])
+#         
         circleAux = geo.createCircleNormal2(branch.finalPoint+1,vAux1,vAux1,branch.radius,branch.index)
         v1 = geo.createVertexOnCurveFraction(circleAux, 0.25)
         v2 = geo.createVertexOnCurveFraction(circleAux, 0.75)
@@ -790,7 +630,7 @@ class Arvore(object):
         vts2 = cubit.get_relatives("curve", arc2, "vertex")
         l1 = geo.createLine(vts1[0], vts1[1])
         #l2 = geo.createLine(vts2[0], vts2[1])
-        t=(lenght-branch.radius*0.5)/lenght
+        t=(lenght-branch.radius*1)/lenght
         u_3 = [cubit.vertex(vts1[0]).coordinates()[0]-cubit.vertex(vts1[1]).coordinates()[0],cubit.vertex(vts1[0]).coordinates()[1]-cubit.vertex(vts1[1]).coordinates()[1],cubit.vertex(vts1[0]).coordinates()[2]-cubit.vertex(vts1[1]).coordinates()[2]]
         u3 = geo2.getVector4_3(u_3)
         geo2.normalizeVector(u3)
@@ -801,6 +641,13 @@ class Arvore(object):
         eli = geo.createEllipseFull(vts1[0], vE, mid)
         eli1 = geo.splitCurve2(eli, vts1[0], vts1[1])
         eli2 = eli1-1
+        
+        e1 = geo.createEllipse(vts1[0], vAP, branch.finalPoint+1)
+        e2 = geo.createEllipse(vts1[1], vAP, branch.finalPoint+1)
+        e3 = geo.createCombineCurve([e1,e2])
+        #e3 = geo.createSpline(vts1[0], vAP, vts1[1])
+        
+        circleI = branch.circleF
         
         uaux = cubit.vertex(v1).coordinates() 
         uaux2 = cubit.vertex(v2).coordinates() 
@@ -814,9 +661,11 @@ class Arvore(object):
         t=(lenght-branch.son1.radius)/lenght
         ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
         arcsf1 = self.genArc2(branch.son1, branch.son1.finalPoint+1,ref,u1,branch.son1.radius,1)
-        #branch.son1.tube = Tube([arc1,l1], arcsf1)
-        branch.son1.tube = Tube([arc1,eli1], arcsf1)
+        branch.son1.circleI = circleI
+        branch.son1.circleF = arcsf1[2]
         branch.son1.link = arcsf1[2]
+        branch.son1.tube = Tube([arc1,e3], arcsf1)
+        branch.son1.tube.line = l1
         
         ip = self.points[branch.son2.initialPoint]
         fp = self.points[branch.son2.finalPoint]
@@ -825,9 +674,11 @@ class Arvore(object):
         t=(lenght-branch.son2.radius)/lenght
         ref = [(1-t)*ip[0]+t*fp[0],((1-t)*ip[1]+t*fp[1]),((1-t)*ip[2]+t*fp[2])]
         arcsf2 = self.genArc2(branch.son2, branch.son2.finalPoint+1,ref,u1,branch.son2.radius,2)
-        #branch.son2.tube = Tube([arc2,l2], arcsf2)
-        branch.son2.tube = Tube([arc2,eli2], arcsf2)
+        branch.son2.circleI = circleI
+        branch.son2.circleF = arcsf2[2]
         branch.son2.link = arcsf2[2]
+        branch.son2.tube = Tube([arc2,e3], arcsf2)
+        branch.son2.tube.line = l1
                 
     def getAngle(self, son):
         initialRoot = self.points[son.root.initialPoint]
@@ -979,7 +830,7 @@ class Arvore(object):
         geo.deleteCurve2(circleI)
         geo.deleteVertex(vAux1)
         geo.deleteVertex(vAux2)
-        
+         
         v1 = geo.createVertexOnCurveFraction(eliFullAux, 0)
         v2 = geo.createVertexOnCurveFraction(eliFullAux, 0.5)
         eli1 = geo.splitCurve2(eliFullAux, v1, v2)

@@ -1,7 +1,6 @@
 import cubit
 import sys
 sys.path.append('/home/bruno/git/local/CenterlinesToGeometry')
-from tree import Tree
 from settings import *
 from arvore import Arvore
 import geo
@@ -9,32 +8,21 @@ import geo2
 
 def main():
     cubit.cmd("set warning off")
-    fp = open(folder+"pontos3.txt")
+    fp = open(folder+"pontos3r.txt")
     pontos = [ map(float,line.split('\t')) for line in fp ]
-    fl = open(folder+"linhas3.txt")
+    fl = open(folder+"linhas3r.txt")
     linhas = [ map(float,line.split('\t')) for line in fl ]
-#     for l in linhas:
-#         l[2] = 0.5
-#     arvore = Tree(pontos, linhas)
-#     #arvore.genPoints()
-#     arvore.preProcess()
-#     arvore.genVertices(scale)
-#     arvore.genCenterlines()
-#     arvore.genSurfaces()
-#     arvore.union()     
-    #arvore.clean() 
     arvore = Arvore(pontos, linhas)
 #     arvore.fixSizes()
-#    arvore.draw()
+#     arvore.draw()
 #    arvore.imprime()
-#    arvore.split2()
 #     arvore.split()
-#    arvore.smoth()
-#     arvore.smoth2()
+#     arvore.smoth()
 #     arvore.save2()
     arvore.smothRadius()
-    arvore.makeGeometry2()
-#    arvore.mesh()
+    arvore.makeGeometry()
+    arvore.mesh()
+    arvore.saveMesh()
 #    arvore.check()
     fp.close()
     fl.close()

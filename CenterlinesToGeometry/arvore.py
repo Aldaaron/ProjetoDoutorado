@@ -298,8 +298,8 @@ class Arvore(object):
                     heap.append(atual.son2) 
                     
     def save(self):
-        pointsFile = open(folder+"pontos2r.txt", 'w')
-        linesFile = open(folder+"linhas2r.txt", 'w')
+        pointsFile = open(folder+"pontos2.txt", 'w')
+        linesFile = open(folder+"linhas2.txt", 'w')
         for p in self.points:
             pointsFile.write("%f\t%f\t%f\n" % (p[0],p[1],p[2]))
         pointsFile.close()
@@ -314,8 +314,8 @@ class Arvore(object):
         linesFile.close()
         
     def save2(self):
-        pointsFile = open(folder+"pontos3r.txt", 'w')
-        linesFile = open(folder+"linhas3r.txt", 'w')
+        pointsFile = open(folder+"pontos3.txt", 'w')
+        linesFile = open(folder+"linhas3.txt", 'w')
         for p in self.points:
             pointsFile.write("%f\t%f\t%f\n" % (p[0],p[1],p[2]))
         pointsFile.close()
@@ -390,6 +390,28 @@ class Arvore(object):
         fix = True
         while fix:
             fix = self.fixCurves()
+            
+    def boundary(self):
+        boundary = []
+        surfs = cubit.get_relatives("volume", self.vol, "surface")
+        for x in range(6, len(surfs)):
+            tris = cubit.get_surface_tris(surfs[x])
+            for y in range(0, len(tris)):
+                nodes = cubit.get_connectivity("tri", tris[y])
+                p1 = cubit.get_nodal_coordinates(nodes[0])
+                p2 = cubit.get_nodal_coordinates(nodes[1])
+                p3 = cubit.get_nodal_coordinates(nodes[2])
+                u_0 = [p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]]
+                u_1 = [p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]]
+                u1 = geo2.crossProduct(u_0, u_1)
+                u1 = geo2.getVector4_3(u1)
+                geo2.normalizeVector(u1)
+#                 if y == 0:
+#                     center_point = cubit.get_center_point("tri", tris[y])
+#                     cubit.cmd("create curve location %f %f %f direction %f %f %f length %f" %(center_point[0],center_point[1],center_point[2],u1[0],u1[1],u1[2],self.root.radius))
+                element = [nodes[0]-1, nodes[1]-1, nodes[2]-1, u1[0], u1[1], u1[2]]
+                boundary.append(element)
+        return boundary
         
     def mesh(self):
 #         surfs = cubit.get_relatives("volume", self.vol, "surface")
@@ -404,11 +426,12 @@ class Arvore(object):
 #         cubit.cmd("surface %d %d %d %d %d %d scheme TriMesh geometry approximation angle 15" % (surfs[0],surfs[1],surfs[2],surfs[3],surfs[4],surfs[5]))
 #         cubit.cmd("Trimesher surface gradation 1.3") 
 #         cubit.cmd("mesh surface %d %d %d %d %d %d" % (surfs[0],surfs[1],surfs[2],surfs[3],surfs[4],surfs[5]))
-        cubit.cmd("volume %d size auto factor 5" % (self.vol)) 
+        cubit.cmd("volume %d size auto factor 4" % (self.vol)) 
         cubit.cmd("volume %d scheme Tetmesh proximity layers off geometry approximation angle 15" % (self.vol)) 
-        cubit.cmd("volume %d tetmesh growth_factor 1" % (self.vol)) 
+        cubit.cmd("volume %d tetmesh growth_factor 1.3" % (self.vol)) 
         cubit.cmd("Trimesher surface gradation 1.3") 
         cubit.cmd("Trimesher volume gradation 1.3") 
+        cubit.cmd("Set Tetmesher Optimize Level 6") 
         cubit.cmd("mesh volume %d" % (self.vol)) 
     
     def mesh2(self):
@@ -495,21 +518,21 @@ class Arvore(object):
             meshFile.write('      <fiber>1.000000,0.000000,0.000000</fiber>\n')
             meshFile.write('    </element>\n')
         meshFile.write('  </element_data>\n')
+        meshFile.write('  <boundary celltype="triangle" dim="2">\n')
+        boundary = self.boundary()
+        for x in range(0, len(boundary)):
+            meshFile.write('    <element id="%d" v0="%d" v1="%d" v2="%d" nx="%f" ny="%f" nz="%f"/>\n' % (x,boundary[x][0],boundary[x][1],boundary[x][2],boundary[x][3],boundary[x][4],boundary[x][5]))
+        meshFile.write('  </boundary>\n')
         meshFile.write('</mesh>\n')
         meshFile.write('<electrophysiology>\n')
         meshFile.write('  <stimuli number="1">\n')
         bb = cubit.get_bounding_box("volume", self.vol)
-        min = [bb[0],bb[1],bb[2]]
-        max = [bb[3],bb[4],bb[5]]
         x0 = bb[0]
         x1 = 0.8*x0 + 0.2*bb[1]
         y0 = bb[3]
         y1 = 0.8*y0 + 0.2*bb[4]
         z0 = bb[6]
         z1 = 0.8*z0 + 0.2*bb[7]
-#         x1 = x0 + max[0]/10
-#         y1 = y0 + max[1]/10
-#         z1 = z0 + max[2]/10
         meshFile.write('    <stim start="0.00" duration="4.00" value="-35.7140" x0="%f" x1="%f" y0="%f" y1="%f" z0="%f" z1="%f" />\n' % (x0,x1,y0,y1,z0,z1))
         meshFile.write('  </stimuli>\n')
         meshFile.write('</electrophysiology>\n')
@@ -605,7 +628,7 @@ class Arvore(object):
         lenght = geo.distance(ipr, fpr)
         t=(lenght-branch.radius)/lenght
         ref = [(1-t)*ipr[0]+t*fpr[0],((1-t)*ipr[1]+t*fpr[1]),((1-t)*ipr[2]+t*fpr[2])]
-        t2=(lenght+branch.radius*0.75)/lenght
+        t2=(lenght+branch.radius)/lenght
         ref2 = [(1-t2)*ipr[0]+t2*fpr[0],((1-t2)*ipr[1]+t2*fpr[1]),((1-t2)*ipr[2]+t2*fpr[2])]
         u_0 = [fp[0]-fpr[0],fp[1]-fpr[1],fp[2]-fpr[2]]
         u_1 = [fp2[0]-fpr[0],fp2[1]-fpr[1],fp2[2]-fpr[2]]
@@ -716,7 +739,7 @@ class Arvore(object):
         pf2 = self.points[branch.son2.finalPoint]
         lenght = geo.distance(pi, pf)
             
-        t=(lenght-1*branch.radius)/lenght
+        t=(lenght-1.1*branch.radius)/lenght
         newPf = [(1-t)*pi[0]+t*pf[0],((1-t)*pi[1]+t*pf[1]),((1-t)*pi[2]+t*pf[2])]
         self.points[branch.finalPoint] = newPf
         #geo.createVertex(newPf[0],newPf[1],newPf[2])

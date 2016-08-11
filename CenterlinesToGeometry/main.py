@@ -8,9 +8,10 @@ import geo2
 
 def main():
     cubit.cmd("set warning off")
-    fp = open(folder+"pontos3r.txt")
+    cubit.cmd("set developer commands on")
+    fp = open(folder+"pontos3.txt")
     pontos = [ map(float,line.split('\t')) for line in fp ]
-    fl = open(folder+"linhas3r.txt")
+    fl = open(folder+"linhas3.txt")
     linhas = [ map(float,line.split('\t')) for line in fl ]
     arvore = Arvore(pontos, linhas)
 #     arvore.fixSizes()

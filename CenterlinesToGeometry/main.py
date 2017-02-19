@@ -15,7 +15,7 @@ def main():
     linhas = [ map(float,line.split('\t')) for line in fl ]
     arvore = Arvore(pontos, linhas)
     arvore.preProcess()
-    arvore.draw()
+    #arvore.draw()
     #arvore.smothRadius()
     #arvore.makeGeometry()
     #arvore.mesh()

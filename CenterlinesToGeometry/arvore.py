@@ -39,25 +39,20 @@ class Arvore(object):
         self.sort()
         self.vol = None
         self.surfVols = []
-#         self.deleteLast()
     
-    def deleteLast(self):
-        heap = [self.root]
-        while not (len(heap) == 0):
-            atual = heap.pop()
-            if atual.son1 is None and atual.son2 is None and not atual.delete:
-                if atual.root.son1 == atual:
-                    atual.root.son1 = None
-                    atual.root.delete = True
-                elif atual.root.son2 == atual:
-                    atual.root.son2 = None
-                    atual.root.delete = True
-                
-            if atual.son1 is not None:
-                heap.append(atual.son1)
-            if atual.son2 is not None:
-                heap.append(atual.son2)  
-    
+    def preProcess(self):
+        self.fixSizes()
+        self.split()
+        self.smoth()
+        self.clean()
+        cubit.reset()
+        
+    def clean(self):
+        for x in range(0, len(self.points)):
+            self.points[x][0] = round(self.points[x][0], 5)
+            self.points[x][1] = round(self.points[x][1], 5)
+            self.points[x][2] = round(self.points[x][2], 5)
+            
     def smothRadius(self):
         heap = [self.root]
         while not (len(heap) == 0):
@@ -203,7 +198,6 @@ class Arvore(object):
             atual = heap.pop()
             if atual.son1 is not None and atual.son2 is not None:
                 self.bif(atual) 
-#                 sonVertex = geo.createVertex(coords[0],coords[1],coords[2])
             if atual.son1 is not None:
                 heap.append(atual.son1)
             if atual.son2 is not None:
@@ -227,26 +221,32 @@ class Arvore(object):
                 sp = geo.splitCurve(spAux, v2)
                 newV = geo.createVertexOnCurveFraction(sp, 0.9)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.75)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.6)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.45)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.3)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.15)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon1, newPoint)
                 
@@ -266,26 +266,32 @@ class Arvore(object):
                 sp = geo.splitCurve(spAux, v2)
                 newV = geo.createVertexOnCurveFraction(sp, 0.9)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.75)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.6)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.45)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.3)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
                 newV = geo.createVertexOnCurveFraction(sp, 0.15)
                 newPoint = cubit.vertex(newV).coordinates()
+                newPoint = [newPoint[0],newPoint[1],newPoint[2]]
                 self.points.append(newPoint)
                 self.splitBranch(rSon2, newPoint)
                 
@@ -296,6 +302,7 @@ class Arvore(object):
                     heap.append(atual.son1)
                 if atual.son2 is not None:
                     heap.append(atual.son2) 
+        self.sort() 
                     
     def save(self):
         pointsFile = open(folder+"pontos2.txt", 'w')
@@ -387,9 +394,9 @@ class Arvore(object):
         self.vol = geo.subtractVolumes(bb, self.vol)
         cubit.cmd('Color Define "%s" RGB %f %f %f' % ("darkred", 0.75,0,0))
         geo.colorVolume(self.vol,'user "darkred"')
-        fix = True
-        while fix:
-            fix = self.fixCurves()
+#         fix = True
+#         while fix:
+#             fix = self.fixCurves()
             
     def boundary(self):
         boundary = []
@@ -433,37 +440,6 @@ class Arvore(object):
         cubit.cmd("Trimesher volume gradation 1.3") 
         cubit.cmd("Set Tetmesher Optimize Level 6") 
         cubit.cmd("mesh volume %d" % (self.vol)) 
-    
-    def mesh2(self):
-        small = self.root.radius/100
-        surfs = cubit.get_relatives("volume", self.vol, "surface")
-        for x in range(0, len(surfs)):
-            id = surfs[x]
-            cvs = cubit.get_relatives("surface", id, "curve")
-            smallCurve = False
-            smallId = 0
-            for y in range(0, len(cvs)):
-                if cubit.get_curve_length(cvs[y]) < small:
-                    smallId = cvs[y]
-                    smallCurve = True
-            if smallCurve:
-                min = cubit.get_curve_radius(smallId)/2
-                cubit.cmd("surface %d sizing function type skeleton min_size %f max_size auto max_gradient 1.5 min_num_layers_2d 1 min_num_layers_1d 1" % (id,min))
-                cubit.cmd("surface %d scheme TriMesh geometry approximation angle 15" % (id)) 
-                cubit.cmd("Trimesher surface gradation 1.3") 
-                #cubit.cmd("mesh surface %d" % (id)) 
-            else:
-                cubit.cmd("surface %d size auto factor 6" % (id)) 
-                cubit.cmd("surface %d scheme TriMesh geometry approximation angle 15" % (id)) 
-                cubit.cmd("Trimesher surface gradation 1.3") 
-                #cubit.cmd("mesh surface %d" % (id))  
-        cubit.cmd("mesh surface all") 
-        cubit.cmd("volume %d size auto factor 6" % (self.vol)) 
-        cubit.cmd("volume %d scheme Tetmesh proximity layers off geometry approximation angle 15" % (self.vol)) 
-        cubit.cmd("volume %d tetmesh growth_factor 1" % (self.vol)) 
-        cubit.cmd("Trimesher surface gradation 1.3") 
-        cubit.cmd("Trimesher volume gradation 1.3") 
-        cubit.cmd("mesh volume %d" % (self.vol)) 
         
     def fixCurves(self):
         small = self.root.radius/100
@@ -487,26 +463,107 @@ class Arvore(object):
                             if cubit.is_modified():
                                 return True
                     
-        return False        
-#             if cubit.get_curve_length(cvs[x]) < small:
-#                 geo.compositeCurve(cvs[x]-1, cvs[x])
-#                 vts = cubit.get_relatives("curve", cvs[x], "vertex")
-#                 for y in range(0, len(cvs)):
-#                     vts2 = cubit.get_relatives("curve", cvs[y], "vertex")
-#                     if len(vts2) == 2:
-#                         if vts[0] == vts2[0] or vts[0] == vts2[1] or vts[1] == vts2[0] or vts[1] == vts2[1]:
-#                             print str(cvs[x]) + " " + str(cvs[y])                     
+        return False                            
         
     def saveMesh(self):
         nNodes = cubit.get_node_count()
         nTets = cubit.get_tet_count()
-        meshFile = open(folder+"mesh.xml", 'w')
+        meshFile = open(folder+"mesh3D_noboxbound.xml", 'w')
         meshFile.write('<mesh celltype="tetrahedron" dim="3">\n')
         meshFile.write('  <nodes size="%d">\n' % (nNodes))
         for x in range(0, nNodes):
             coords = cubit.get_nodal_coordinates(x+1)
             meshFile.write('    <node id="%d" x="%f" y="%f" z="%f"/>\n' % (x,coords[0],coords[1],coords[2]))
         meshFile.write('  </nodes>\n')
+        
+        meshFile.write('  <elements size="%d">\n' % (nTets))
+        for x in range(0, nTets):
+            nodes = cubit.get_connectivity("tet", x+1)
+            meshFile.write('    <element id="%d" v0="%d" v1="%d" v2="%d" v3="%d"/>\n' % (x,nodes[0]-1,nodes[1]-1,nodes[2]-1,nodes[3]-1))
+        meshFile.write('  </elements>\n')
+        meshFile.write('  <element_data type="fiber_transversely_isotropic">\n')
+        for x in range(0, nTets):
+            meshFile.write('    <element id="%d">\n' %(x))
+            meshFile.write('      <fiber>1.000000,0.000000,0.000000</fiber>\n')
+            meshFile.write('    </element>\n')
+        meshFile.write('  </element_data>\n')
+        
+        meshFile.write('  <boundary celltype="triangle" dim="2">\n')
+        bsurfs = cubit.get_relatives("volume", self.vol, "surface")
+        ec = 0
+        for x in range(6, len(bsurfs)):
+            #if x is not 16 and x is not 14:
+            tris = cubit.get_surface_tris(bsurfs[x])
+            surf = cubit.surface(bsurfs[x])
+            for y in range(0, len(tris)):
+                cp = cubit.get_center_point("tri", tris[y])
+                norm = surf.normal_at([cp[0],cp[1],cp[2]])
+                #cubit.cmd("create curve location %f %f %f direction %f %f %f length %f" % (cp[0],cp[1],cp[2],norm[0],norm[1],norm[2],200))
+
+                nodes = cubit.get_connectivity("tri", tris[y])
+                element = [nodes[0]-1, nodes[1]-1, nodes[2]-1]
+                meshFile.write('    <element id="%d" marker="%d" v0="%d" v1="%d" v2="%d" nx="%f" ny="%f" nz="%f"/>\n' % (ec,1.0,element[0],element[1],element[2],norm[0],norm[1],norm[2]))
+                ec = ec+1
+        meshFile.write('  </boundary>\n')
+
+        
+        
+        #meshFile.write('  <boundary celltype="triangle" dim="2">\n')
+        #surfs = cubit.get_relatives("volume", self.vol, "surface")
+        #ec = 0
+        #for x in range(0, 2):
+        #    tris = cubit.get_surface_tris(surfs[x])
+        #    for y in range(0, len(tris)):
+        #        nodes = cubit.get_connectivity("tri", tris[y])
+        #        element = [nodes[0]-1, nodes[1]-1, nodes[2]-1]
+        #        ec = ec+1
+        #        meshFile.write('    <element id="%d" marker="%d" v0="%d" v1="%d" v2="%d"/>\n' % (ec,x,element[0],element[1],element[2]))
+        #meshFile.write('    <element id="%d" marker="%d" v0="%d" v1="%d" v2="%d"/>\n' % (ec+1,2,element[0],element[1],element[2]))
+        #meshFile.write('  </boundary>\n')
+        
+        meshFile.write('</mesh>\n')
+        #meshFile.write('<poisson>\n')
+        #meshFile.write('  <neumann>\n')
+        #meshFile.write('    <node id="0" marker="0" value="-1.0" />\n')
+        #meshFile.write('    <node id="1" marker="1" value="1.0" />\n')
+        #meshFile.write('  </neumann>\n')
+        #meshFile.write('  <dirichlet>\n')
+        #meshFile.write('    <node id="2" marker="2" value="0.0" />\n')
+        #meshFile.write('  </dirichlet>\n')
+        #meshFile.write('</poisson>\n')
+        
+        #meshFile.write('<electrophysiology>\n')
+        #meshFile.write('  <stimuli number="1">\n')
+        #bb = cubit.get_bounding_box("volume", self.vol)
+        #x0 = bb[0]
+        #x1 = 0.8*x0 + 0.2*bb[1]
+        #y0 = bb[3]
+        #y1 = 0.8*y0 + 0.2*bb[4]
+        #z0 = bb[6]
+        #z1 = 0.8*z0 + 0.2*bb[7]
+        #meshFile.write('    <stim start="0.00" duration="4.00" value="-35.7140" x0="%f" x1="%f" y0="%f" y1="%f" z0="%f" z1="%f" />\n' % (x0,x1,y0,y1,z0,z1))
+        #meshFile.write('  </stimuli>\n')
+        #meshFile.write('</electrophysiology>\n')
+        meshFile.close()
+    
+    def saveMesh3D(self):
+        cubit.cmd("brick x 5000 y 5000 z 5000")
+        cubit.cmd("create cylinder height 4000 radius 500")
+        cubit.cmd("subtract body 2 from body 1")
+        volID = cubit.get_last_id("volume")
+        self.vol = volID
+        self.mesh()
+        
+        nNodes = cubit.get_node_count()
+        meshFile = open(folder+"mesh3D2.xml", 'w')
+        meshFile.write('<mesh celltype="tetrahedron" dim="3">\n')
+        meshFile.write('  <nodes size="%d">\n' % (nNodes))
+        for x in range(0, nNodes):
+            coords = cubit.get_nodal_coordinates(x+1)
+            meshFile.write('    <node id="%d" x="%f" y="%f" z="%f"/>\n' % (x,coords[0],coords[1],coords[2]))
+        meshFile.write('  </nodes>\n')
+        
+        nTets = cubit.get_tet_count()
         meshFile.write('  <elements size="%d">\n' % (nTets))
         for x in range(0, nTets):
             nodes = cubit.get_connectivity("tet", x+1)
@@ -519,23 +576,153 @@ class Arvore(object):
             meshFile.write('    </element>\n')
         meshFile.write('  </element_data>\n')
         meshFile.write('  <boundary celltype="triangle" dim="2">\n')
-        boundary = self.boundary()
-        for x in range(0, len(boundary)):
-            meshFile.write('    <element id="%d" v0="%d" v1="%d" v2="%d" nx="%f" ny="%f" nz="%f"/>\n' % (x,boundary[x][0],boundary[x][1],boundary[x][2],boundary[x][3],boundary[x][4],boundary[x][5]))
+        bsurfs = [10, 11, 12]
+        ec = 0
+        for x in range(0, len(bsurfs)):
+            tris = cubit.get_surface_tris(bsurfs[x])
+            surf = cubit.surface(bsurfs[x])
+            for y in range(0, len(tris)):
+                cp = cubit.get_center_point("tri", tris[y])
+                norm = surf.normal_at([cp[0],cp[1],cp[2]])
+                #cubit.cmd("create curve location %f %f %f direction %f %f %f length %f" % (cp[0],cp[1],cp[2],norm[0],norm[1],norm[2],200))
+
+                nodes = cubit.get_connectivity("tri", tris[y])
+                element = [nodes[0]-1, nodes[1]-1, nodes[2]-1]
+                meshFile.write('    <element id="%d" marker="%d" v0="%d" v1="%d" v2="%d" nx="%f" ny="%f" nz="%f"/>\n' % (ec,1.0,element[0],element[1],element[2],norm[0],norm[1],norm[2]))
+                ec = ec+1
         meshFile.write('  </boundary>\n')
         meshFile.write('</mesh>\n')
+        #meshFile.write('<poisson>\n')
+        #meshFile.write('  <neumann>\n')
+        #meshFile.write('    <node id="1" marker="1" value="1.0" />\n')
+        #meshFile.write('  </neumann>\n')
+        #meshFile.write('</poisson>\n')
+        #meshFile.write('<electrophysiology>\n')
+        #meshFile.write('  <stimuli number="1">\n')
+        #bb = cubit.get_bounding_box("volume", self.vol)
+        #x0 = bb[0]
+        #x1 = 0.8*x0 + 0.2*bb[1]
+        #y0 = bb[3]
+        #y1 = 0.8*y0 + 0.2*bb[4]
+        #z0 = bb[6]
+        #z1 = 0.8*z0 + 0.2*bb[7]
+        #meshFile.write('    <stim start="0.00" duration="4.00" value="-35.7140" x0="%f" x1="%f" y0="%f" y1="%f" z0="%f" z1="%f" />\n' % (x0,x1,y0,y1,z0,z1))
+        #meshFile.write('  </stimuli>\n')
+        #meshFile.write('</electrophysiology>\n')
+        meshFile.close()
+        
+    def saveMesh2D2(self):
+        cubit.cmd("create surface rectangle width 5000 height 5000 zplane")
+        cubit.cmd("create surface rectangle width 1000 height 1000 zplane")
+        cubit.cmd("subtract body 2 from body 1")
+        surfID = cubit.get_last_id("surface")
+        cubit.cmd("surface all size auto factor 4")
+        cubit.cmd("surface all scheme TriMesh")
+        cubit.cmd("mesh surface all") 
+        
+        nNodes = cubit.get_node_count()
+        meshFile = open(folder+"mesh2D2.xml", 'w')
+        meshFile.write('<mesh celltype="triangle" dim="2">\n')
+        meshFile.write('  <nodes size="%d">\n' % (nNodes))
+        for x in range(0, nNodes):
+            coords = cubit.get_nodal_coordinates(x+1)
+            meshFile.write('    <node id="%d" x="%f" y="%f" z="%f"/>\n' % (x,coords[0],coords[1],coords[2]))
+        meshFile.write('  </nodes>\n')
+        
+
+        tris = cubit.get_surface_tris(surfID)
+        meshFile.write('  <elements size="%d">\n' % (len(tris)))
+        for x in range(0, len(tris)):
+            nd = cubit.get_connectivity("tri", tris[x])
+            meshFile.write('    <element id="%d" v0="%d" v1="%d" v2="%d"/>\n' % (x,nd[0]-1,nd[1]-1,nd[2]-1))
+        meshFile.write('  </elements>\n')
+        meshFile.write('  <element_data type="fiber_transversely_isotropic">\n')
+        for x in range(0, len(tris)):
+            meshFile.write('    <element id="%d">\n' %(x))
+            meshFile.write('      <fiber>1.000000,0.000000,0.000000</fiber>\n')
+            meshFile.write('    </element>\n')
+        meshFile.write('  </element_data>\n')
+        
+        meshFile.write('  <boundary celltype="line" dim="1">\n')
+        
+        eds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+        ec = 1
+        surf = cubit.surface(surfID)
+        
+        for y in range(0, len(eds)):
+            nodes = cubit.get_connectivity("edge", eds[y])
+            element = [nodes[0]-1, nodes[1]-1]
+            #cp = cubit.get_center_point("edge", eds[y])
+            #norm = surf.normal_at([cp[0],cp[1],cp[2]])
+            #cubit.cmd("create curve location %f %f %f direction %f %f %f length %f" % (cp[0],cp[1],cp[2], norm[0], norm[1], norm[2], 200))
+            #ec = ec+1
+            #meshFile.write('    <element id="%d" marker="%d" v0="%d" v1="%d" nx="%f" ny="%f" nz="%f"/>\n' % (ec,1,element[0],element[1], norm[0], norm[1], norm[2]))
+        #meshFile.write('    <element id="%d" marker="%d" v0="%d" v1="%d" v2="%d"/>\n' % (ec+1,2,element[0],element[1],element[2]))
+        meshFile.write('  </boundary>\n')
+        meshFile.write('</mesh>\n')
+        meshFile.write('<poisson>\n')
+        meshFile.write('  <neumann>\n')
+        meshFile.write('    <node id="1" marker="1" value="1.0" />\n')
+        meshFile.write('  </neumann>\n')
+        #meshFile.write('  <dirichlet>\n')
+        #meshFile.write('    <node id="2" marker="2" value="0.0" />\n')
+        #meshFile.write('  </dirichlet>\n')
+        meshFile.write('</poisson>\n')
+        
         meshFile.write('<electrophysiology>\n')
         meshFile.write('  <stimuli number="1">\n')
-        bb = cubit.get_bounding_box("volume", self.vol)
+        bb = cubit.get_bounding_box("surface", surfID)
         x0 = bb[0]
         x1 = 0.8*x0 + 0.2*bb[1]
         y0 = bb[3]
         y1 = 0.8*y0 + 0.2*bb[4]
-        z0 = bb[6]
-        z1 = 0.8*z0 + 0.2*bb[7]
-        meshFile.write('    <stim start="0.00" duration="4.00" value="-35.7140" x0="%f" x1="%f" y0="%f" y1="%f" z0="%f" z1="%f" />\n' % (x0,x1,y0,y1,z0,z1))
+        #z0 = bb[6]
+        #z1 = 0.8*z0 + 0.2*bb[7]
+        meshFile.write('    <stim start="0.00" duration="4.00" value="-35.7140" x0="%f" x1="%f" y0="%f" y1="%f" />\n' % (x0,x1,y0,y1))
         meshFile.write('  </stimuli>\n')
         meshFile.write('</electrophysiology>\n')
+        meshFile.close()
+        
+    def saveMeshPoisson(self):
+        nNodes = cubit.get_node_count()
+        nTets = cubit.get_tet_count()
+        meshFile = open(folder+"meshPoisson.xml", 'w')
+        meshFile.write('<mesh celltype="tetrahedron" dim="3">\n')
+        meshFile.write('  <nodes size="%d">\n' % (nNodes))
+        for x in range(0, nNodes):
+            coords = cubit.get_nodal_coordinates(x+1)
+            meshFile.write('    <node id="%d" x="%f" y="%f" z="%f"/>\n' % (x,coords[0],coords[1],coords[2]))
+        meshFile.write('  </nodes>\n')
+        meshFile.write('  <elements size="%d">\n' % (nTets))
+        for x in range(0, nTets):
+            nodes = cubit.get_connectivity("tet", x+1)
+            meshFile.write('    <element id="%d" v0="%d" v1="%d" v2="%d" v3="%d"/>\n' % (x,nodes[0]-1,nodes[1]-1,nodes[2]-1,nodes[3]-1))
+        meshFile.write('  </elements>\n')
+        meshFile.write('  <boundary celltype="triangle" dim="2">\n')
+        
+        surfs = cubit.get_relatives("volume", self.vol, "surface")
+        ec = 0
+        for x in range(0, 2):
+            tris = cubit.get_surface_tris(surfs[x])
+            for y in range(0, len(tris)):
+                nodes = cubit.get_connectivity("tri", tris[y])
+                element = [nodes[0]-1, nodes[1]-1, nodes[2]-1]
+                ec = ec+1
+                meshFile.write('    <element id="%d" marker="%d" v0="%d" v1="%d" v2="%d"/>\n' % (ec,x,element[0],element[1],element[2]))
+        meshFile.write('    <element id="%d" marker="%d" v0="%d" v1="%d" v2="%d"/>\n' % (ec+1,2,element[0],element[1],element[2]))
+        meshFile.write('  </boundary>\n')
+        
+        meshFile.write('</mesh>\n')
+        meshFile.write('<poisson>\n')
+        meshFile.write('  <neumann>\n')
+        meshFile.write('    <node id="0" marker="0" value="-1.0" />\n')
+        meshFile.write('    <node id="1" marker="1" value="1.0" />\n')
+        meshFile.write('  </neumann>\n')
+        meshFile.write('  <dirichlet>\n')
+        meshFile.write('    <node id="2" marker="2" value="0.0" />\n')
+        meshFile.write('  </dirichlet>\n')
+        meshFile.write('</poisson>\n')
         meshFile.close()
         
     def genSurfaces(self):
@@ -601,24 +788,6 @@ class Arvore(object):
         free_vertex_id_list = cubit.get_list_of_free_ref_entities("vertex")
         for id in free_vertex_id_list:
             geo.deleteVertex(id)
-#         heap = [self.root]
-#         count = 0
-#         while not (len(heap) == 0):
-#             count += 1
-#             if count < 1500:   
-#                 atual = heap.pop()
-#             else:
-#                 break
-#             if atual == self.root:
-#                 self.vol = geo.createVolume(atual.surfs)
-#             else:
-#                 vol = geo.createVolume(atual.surfs)
-#                 self.vol = geo.unionVolumes(self.vol, vol)
-#             if atual.son1 is not None:
-#                 heap.append(atual.son1)
-#             if atual.son2 is not None:
-#                 heap.append(atual.son2) 
-    
     
     def genSons(self, branch):
         ipr = self.points[branch.initialPoint]
@@ -798,9 +967,9 @@ class Arvore(object):
         self.points.append(newPoint2)
         new2 = Branch(branch.finalPoint, len(self.points)-1, radius2)
         new2.root = branch
-        new2.son2 = branch.son2
-        new2.son2.initialPoint = len(self.points)-1
-        new2.son2.root = new2
+        new2.son1 = branch.son2
+        new2.son1.initialPoint = len(self.points)-1
+        new2.son1.root = new2
         branch.son2 = new2
     
     def genArc(self, branch, point, ref, u, radius):

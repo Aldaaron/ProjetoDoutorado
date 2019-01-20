@@ -352,7 +352,7 @@ class Arvore(object):
         count = 0
         while not (len(heap) == 0):
             count += 1
-            if count < 1500:
+            if count < 15000:
                 atual = heap.pop()
             else:
                 break
@@ -390,10 +390,17 @@ class Arvore(object):
         self.genSurfaces()
         self.genVolumes()
         self.vol = cubit.get_entities("volume")[0]
-        bb = geo.createBoudingBox(self.vol, self.root.radius/4)
-        self.vol = geo.subtractVolumes(bb, self.vol)
+        bb = geo.createBoudingBox(self.vol, self.root.radius)
+        #cubit.cmd("brick x 20000 y 20000 z 20000")
+        #cubit.cmd("create sphere radius 15100")
+        #bb = cubit.get_last_id("volume")
+        #cubit.cmd("move Volume %d location 0 0 0" % (self.vol))
+        #print cubit.volume(bb).volume()
+        #self.vol = geo.subtractVolumes(bb, self.vol)
+        self.vol = bb
         cubit.cmd('Color Define "%s" RGB %f %f %f' % ("darkred", 0.75,0,0))
         geo.colorVolume(self.vol,'user "darkred"')
+       
 #         fix = True
 #         while fix:
 #             fix = self.fixCurves()
@@ -468,7 +475,7 @@ class Arvore(object):
     def saveMesh(self):
         nNodes = cubit.get_node_count()
         nTets = cubit.get_tet_count()
-        meshFile = open(folder+"mesh3D_noboxbound.xml", 'w')
+        meshFile = open(folder+"Cubo.xml", 'w')
         meshFile.write('<mesh celltype="tetrahedron" dim="3">\n')
         meshFile.write('  <nodes size="%d">\n' % (nNodes))
         for x in range(0, nNodes):
@@ -491,7 +498,8 @@ class Arvore(object):
         meshFile.write('  <boundary celltype="triangle" dim="2">\n')
         bsurfs = cubit.get_relatives("volume", self.vol, "surface")
         ec = 0
-        for x in range(6, len(bsurfs)):
+        for x in range(0, len(bsurfs)):
+        #for x in range(6, len(bsurfs)):
             #if x is not 16 and x is not 14:
             tris = cubit.get_surface_tris(bsurfs[x])
             surf = cubit.surface(bsurfs[x])
@@ -525,7 +533,7 @@ class Arvore(object):
         meshFile.write('<poisson>\n')
         meshFile.write('  <neumann>\n')
         #meshFile.write('    <node id="0" marker="0" value="-1.0" />\n')
-        meshFile.write('    <node id="1" marker="1" value="-0.5" />\n')
+        meshFile.write('    <node id="1" marker="1" value="0.05"/>\n')
         meshFile.write('  </neumann>\n')
         #meshFile.write('  <dirichlet>\n')
         #meshFile.write('    <node id="2" marker="2" value="0.0" />\n')

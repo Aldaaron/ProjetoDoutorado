@@ -1,6 +1,6 @@
 import cubit
 import sys
-sys.path.append('/home/bruno/git/local/CenterlinesToGeometry')
+sys.path.append('/home/bruno/git/ProjetoDoutorado/CenterlinesToGeometry')
 from settings import *
 from arvore import Arvore
 import geo
@@ -20,7 +20,7 @@ def main():
     arvore.makeGeometry()
     arvore.mesh()
     arvore.saveMesh()
-    #arvore.saveMesh3D()
+      #arvore.saveMesh3D()
     fp.close()
     fl.close()
     
